@@ -1,0 +1,1744 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>UIs</title></title>
+  <meta name="description" content="Craft UIs">
+  <meta name="author" content="Nick & Jarkko">
+
+  <meta property="og:title" content="Craft UIs: boot-up self test">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nnaumenko.gitlab.com/craft_ui">
+  <meta property="og:description" content="Craft UIs: boot-up self-test">
+  <meta property="og:image" content="image.png">
+
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed&family=Lato:wght@300&family=Open+Sans+Condensed:wght@300&family=Share+Tech+Mono&family=Zen+Kaku+Gothic+Antique&display=swap" rel="stylesheet"> 
+
+  <style>
+    body {background-color: #4c4c5c;}
+    .grid-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 800px 800px 1fr;
+      gap: 30px;
+      grid-auto-rows: 1;
+    }
+    .grid-margin-lt {
+      grid-column: 1;
+      grid-row: 1 / 3;
+    }
+    .grid-interface-a {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .grid-interface-b {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    .grid-interface-nav {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .grid-interface-radar {
+      grid-column: 3;
+      grid-row: 2;
+    }
+    .grid-interface-msg {
+      grid-column: 2;
+      grid-row: 3;
+    }
+    .grid-interface-misc {
+      grid-column: 3;
+      grid-row: 3;
+    }
+    .grid-margin-rt {
+      grid-column: 4;
+      grid-row: 1 / 3;
+    }
+  </style>
+
+  <script type="text/javascript">
+
+    // Set element-by-id to a CSS class and remove all previous CSS classes associated with this element-by-id
+    function setClass(eid, cssclass) {
+        document.getElementById(eid).setAttribute('class', cssclass);
+    }
+
+    // Manage ticking RTC clock 
+    function displayRtc() {
+      function twoDigit(x) {
+        if (x > 9 || x < -9) return x;
+        return '0' + x;
+      }
+      const d = new Date()
+      const day = d.getDate();
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const hour = d.getHours();
+      const minute = d.getMinutes();
+      const second = d.getSeconds();
+      const dtstr = 
+        twoDigit(day) + '/' + twoDigit(month) + '/' + year + ' ' + 
+        twoDigit(hour) + ':' + twoDigit(minute) + ':' + twoDigit(second);
+      document.getElementById('top-rtc-a').innerHTML = dtstr;
+      document.getElementById('top-rtc-b').innerHTML = dtstr;
+      document.getElementById('top-rtc-nav').innerHTML = dtstr;
+      document.getElementById('top-rtc-radar').innerHTML = dtstr;
+      document.getElementById('top-rtc-msg').innerHTML = dtstr;
+      document.getElementById('top-rtc-misc').innerHTML = dtstr;
+      const refreshRate = 500;
+      mytime=setTimeout('displayRtc()',refreshRate);
+    }
+
+    // Generate random hexadecimal string
+    function generateHex(resultSize) {
+      let result = '';
+      const hexDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+      const len = hexDigits.length;
+      for (let i = 0; i < resultSize; i++) {
+        result += (hexDigits[Math.floor(Math.random() * len)]);
+      }
+      return result;
+    }
+
+    // Set all top flags to 'on' state
+    function flagsOn() {
+        setClass('top-tmrf', 'flag-red-on');
+        setClass('top-tmrcor', 'flag-yellow-on');
+        setClass('top-sysf', 'flag-red-on');
+        setClass('top-busf', 'flag-red-on');
+        setClass('top-wdt', 'flag-green-on');
+        setClass('top-memf', 'flag-red-on');
+        setClass('top-pgf', 'flag-red-on');
+        setClass('top-ok', 'flag-green-on');
+    }
+
+    // Set all top flags to 'off' state
+    function flagsOff() {
+        setClass("top-tmrf", 'flag-off');
+        setClass("top-tmrcor", 'flag-off');
+        setClass("top-sysf", 'flag-off');
+        setClass("top-busf", 'flag-off');
+        setClass("top-wdt", 'flag-off');
+        setClass("top-memf", 'flag-off');
+        setClass("top-pgf", 'flag-off');
+        setClass("top-ok", 'flag-off');
+    }
+
+    // Manage CPU and TMR testing
+    // Small functions cannot be nested to be used with setTimeout as they are invoked in global window context
+    function flagsCpuTest() {
+      setClass('top-tmrf','flag-red-off');
+      setClass('top-tmrcor','flag-yellow-on');
+      setClass('diag-tmr','diagram-warn');
+    }
+    function setFail(cpu){
+      setClass("top-tmrf","flag-red-on");
+      setClass("top-tmrcor",'flag-yellow-off');
+      setClass("top-sysf","flag-red-on");
+      setClass("diag-tmr","blinking-red diagram-fail");
+      setClass("diag-cpu" + cpu, "diagram-fail");
+    }
+    function setWarn(cpu){
+      setClass("top-tmrf",'flag-red-off');
+      setClass("top-tmrcor",'flag-yellow-off');
+      setClass("top-sysf",'flag-red-off');
+      setClass("diag-tmr","blinking-yellow diagram-warn");
+      setClass("diag-cpu" + cpu,"diagram-warn");
+    }
+    function setOk(cpu){
+      setClass("top-tmrf",'flag-red-off');
+      setClass("top-tmrcor",'flag-yellow-off');
+      setClass("diag-tmr",'diagram');
+      setClass("diag-cpu" + cpu,'diagram-ok');
+    }
+    function finish(cpu){
+      setClass('top-tmrf','flag-off');
+      setClass('top-tmrcor','flag-off');
+      setClass('diag-tmr','diagram');
+      setClass('diag-cpu' + cpu,'diagram-ok');
+    }
+
+    function cpuTest(cpu, delayTime) {
+      setTimeout('flagsCpuTest()', delayTime);
+      setTimeout('setFail(' + cpu + ')', delayTime + 500);
+      setTimeout('setOk(' + cpu + ')', delayTime + 1000);
+      setTimeout('setWarn(' + cpu + ')', delayTime + 2000);
+      setTimeout('setOk(' + cpu + ')', delayTime + 2250);
+      setTimeout('setWarn(' + cpu + ')', delayTime + 2500);
+      setTimeout('setOk(' + cpu + ')', delayTime + 2750);
+      setTimeout('setWarn(' + cpu + ')', delayTime + 3000);
+      setTimeout('setOk(' + cpu + ')', delayTime + 3250);
+      return 3500;
+    }
+
+    function finishCpuTest() {
+      setClass('diag-tmr','diagram-ok');
+      setClass('top-tmrf','flag-off');   
+      setClass('top-tmrcor','flag-off');     
+      setClass('top-sysf','flag-off');
+      return 0;
+    }
+
+    // Manage RAM & ROM test
+
+    function testRom(delayTime) {
+      setTimeout("setClass('top-memf','blinking-yellow flag-off')", delayTime);
+      setTimeout("setClass('top-pgf','blinking-green flag-off')", delayTime);
+      setTimeout("setClass('xlog-mem0a','console')",  delayTime);
+
+      setTimeout("setClass('diag-mem0a','diagram-ok')", delayTime + (750 * 1));
+      setTimeout("setClass('diag-mem0b','diagram-ok')", delayTime + (750 * 1));
+      setTimeout("setClass('log-mem0a','console-ok')",  delayTime + (750 * 1));
+      setTimeout("setClass('log-mem0b','console-ok')",  delayTime + (750 * 1));
+      setTimeout("setClass('xlog-mem0b','console')",  delayTime + (750 * 1));
+      setTimeout("setClass('xlog-mem1a','console')",  delayTime + (750 * 1));
+
+      setTimeout("setClass('diag-mem1a','diagram-ok')", delayTime + (750 * 2));
+      setTimeout("setClass('diag-mem1b','diagram-ok')", delayTime + (750 * 2));
+      setTimeout("setClass('log-mem1a','console-ok')",  delayTime + (750 * 2));
+      setTimeout("setClass('log-mem1b','console-ok')",  delayTime + (750 * 2));
+      setTimeout("setClass('xlog-mem1b','console')",  delayTime + (750 * 2));
+      setTimeout("setClass('xlog-mem2a','console')",  delayTime + (750 * 2));
+
+      setTimeout("setClass('diag-mem2a','diagram-ok')", delayTime + (750 * 3));
+      setTimeout("setClass('diag-mem2b','diagram-ok')", delayTime + (750 * 3));
+      setTimeout("setClass('log-mem2a','console-ok')",  delayTime + (750 * 3));
+      setTimeout("setClass('log-mem2b','console-ok')",  delayTime + (750 * 3));
+      setTimeout("setClass('xlog-mem2b','console')",  delayTime + (750 * 3));
+
+      setTimeout("setClass('log-mem-ver','console')",  delayTime + (750 * 3));
+      setTimeout("setClass('xlog-mem-ver','console')",  delayTime + (750 * 3));
+
+      setTimeout("setClass('top-memf','flag-off')", delayTime + (750 * 3));
+      setTimeout("setClass('top-pgf','flag-off')", delayTime + (750 * 3));
+
+      return 3000;
+    }
+
+    function testRam(delayTime) {
+      setTimeout("setClass('top-memf','flag-red-on')", delayTime);
+      setTimeout("setClass('top-sysf','flag-red-on')", delayTime);
+      setTimeout("setClass('diag-ram','diagram-warn')", delayTime);
+
+      setTimeout("setClass('diag-ram','diagram-ok')", delayTime + 1000);
+      setTimeout("setClass('top-memf','flag-off')", delayTime + 1000);
+      setTimeout("setClass('top-sysf','flag-off')", delayTime + 1000);
+
+      setTimeout("setClass('log-ram','console-ok')", delayTime + 1000);
+
+      return 4000;
+    }
+
+    // Manage IRQ vector test
+
+    function testIrqs2578(delayTime){
+      let dt = delayTime;
+
+      setTimeout("setClass('diag-irq02','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq02','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq2','console')", delayTime);
+
+      setTimeout("setClass('diag-irq07','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq07','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq7','console')", delayTime);
+
+      setTimeout("setClass('diag-irq05','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq05','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq5','console')", delayTime);
+
+      setTimeout("setClass('diag-irq08','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq08','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq8','console')", delayTime);
+
+      return (dt - delayTime);
+    }
+
+    function testIrqs41112(delayTime) {
+      let dt = delayTime;
+
+      setTimeout("setClass('diag-irq11','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq11','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq11','console')", delayTime);
+
+      setTimeout("setClass('diag-irq12','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq12','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq12','console')", delayTime);
+
+      setTimeout("setClass('diag-irq04','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq04','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq4','console')", delayTime);
+
+      return (dt - delayTime);
+    }
+
+    function testIrq15(delayTime) {
+      let dt = delayTime;
+
+      setTimeout("setClass('diag-irq15','diagram-warn')", dt);
+      dt += 750;
+      setTimeout("setClass('diag-irq15','diagram-ok')", dt);
+      setTimeout("setClass('xlog-irq15','console')", delayTime);
+
+      return (dt - delayTime);
+    }
+
+    // Manage instrument / actuator test
+
+    function cycleColoursInstrumentBus(delayTime, diagId, busId){
+      setTimeout("setClass('top-busf','flag-red-on')", delayTime);
+      setTimeout("setClass('top-sysf','flag-red-on')", delayTime);
+      setTimeout("setClass(" + busId + ",'flag-red-on')", delayTime);
+      setTimeout("setClass(" + diagId + ",'diagram-fail')", delayTime);
+
+      setTimeout("setClass('top-busf','flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass('top-sysf','flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass(" + busId + ",'flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass(" + diagId + ",'diagram-warn')", delayTime + 250);
+
+      setTimeout("setClass('top-busf','flag-off')", delayTime + 500);
+      setTimeout("setClass('top-sysf','flag-off')", delayTime + 500);
+      setTimeout("setClass(" + busId + ",'diagram')", delayTime + 500);
+      setTimeout("setClass(" + diagId + ",'diagram-ok')", delayTime + 500);
+
+      return 750;
+    }
+
+    function cycleColoursInstrument(delayTime, diagId){
+      let dt = delayTime;
+      dt += cycleColoursInstrumentBus(dt, diagId, "'diag-bus-alpha'");
+      dt += cycleColoursInstrumentBus(dt, diagId, "'diag-bus-bravo'");
+      dt += cycleColoursInstrumentBus(dt, diagId, "'diag-bus-tango'");
+
+      return (dt - delayTime);
+
+    }
+
+    function cycleColoursActuatorBus(delayTime, diagId, busId){
+      setTimeout("setClass('top-busf','flag-red-on')", delayTime);
+      setTimeout("setClass('top-sysf','flag-red-on')", delayTime);
+      setTimeout("setClass(" + busId + ",'flag-red-on')", delayTime);
+      setTimeout("setClass(" + diagId + ",'diagram-fail')", delayTime);
+
+      setTimeout("setClass('top-busf','flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass('top-sysf','flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass(" + busId + ",'flag-yellow-on')", delayTime + 250);
+      setTimeout("setClass(" + diagId + ",'diagram-warn')", delayTime + 250);
+
+      setTimeout("setClass('top-busf','flag-off')", delayTime + 250*2);
+      setTimeout("setClass('top-sysf','flag-off')", delayTime + 250*2);
+      setTimeout("setClass(" + busId + ",'diagram')", delayTime + 250*2);
+      setTimeout("setClass(" + diagId + ",'diagram-ok')", delayTime + 250*2);
+
+      setTimeout("setClass('top-busf','flag-red-on')", delayTime + 250*3);
+      setTimeout("setClass('top-sysf','flag-red-on')", delayTime + 250*3);
+      setTimeout("setClass(" + busId + ",'flag-red-on')", delayTime + 250*3);
+      setTimeout("setClass(" + diagId + ",'diagram-fail')", delayTime + 250*3);
+
+      setTimeout("setClass('top-busf','flag-off')", delayTime + 250*4);
+      setTimeout("setClass('top-sysf','flag-off')", delayTime + 250*4);
+      setTimeout("setClass(" + busId + ",'diagram')", delayTime + 250*4);
+      setTimeout("setClass(" + diagId + ",'diagram-ok')", delayTime + 250*4);
+
+      setTimeout("setClass('top-busf','flag-yellow-on')", delayTime + 250*5);
+      setTimeout("setClass('top-sysf','flag-yellow-on')", delayTime + 250*5);
+      setTimeout("setClass(" + busId + ",'flag-yellow-on')", delayTime + 250*5);
+      setTimeout("setClass(" + diagId + ",'diagram-warn')", delayTime + 250*5);
+
+      setTimeout("setClass('top-busf','flag-off')", delayTime + 250*6);
+      setTimeout("setClass('top-sysf','flag-off')", delayTime + 250*6);
+      setTimeout("setClass(" + busId + ",'diagram')", delayTime + 250*6);
+      setTimeout("setClass(" + diagId + ",'diagram-ok')", delayTime + 250*6);
+
+      return 2000;
+
+    }
+
+    function cycleColoursActuator(delayTime, diagId) {
+      let dt = delayTime;
+      dt += cycleColoursActuatorBus(dt, diagId, "'diag-bus-alpha'");
+      dt += cycleColoursActuatorBus(dt, diagId, "'diag-bus-bravo'");
+      dt += cycleColoursActuatorBus(dt, diagId, "'diag-bus-tango'");
+      return (dt - delayTime);
+    }
+
+    function testBusses(delayTime) {
+      let dt = delayTime;
+
+      setTimeout("setClass('top-busf','blinking-yellow flag-off')", dt);
+      setTimeout("setClass('top-sysf','blinking-yellow flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-warn')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-warn')", dt);
+      dt += 500;
+      setTimeout("setClass('diag-bus-tango','diagram-warn')", dt);
+      dt += 1500;
+
+      setTimeout("setClass('top-busf','blinking-green flag-off')", dt);
+      setTimeout("setClass('top-sysf','blinking-green flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-ok')", dt);
+      dt += 500;
+      setTimeout("setClass('diag-bus-tango','diagram-ok')", dt);
+      dt += 1500;
+
+      setTimeout("setClass('top-busf','blinking-red flag-off')", dt);
+      setTimeout("setClass('top-sysf','blinking-red flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-fail')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-fail')", dt);
+      setTimeout("setClass('diag-bus-tango','diagram-fail')", dt);
+      dt += 1000;
+
+      setTimeout("setClass('top-busf','blinking-green flag-off')", dt);
+      setTimeout("setClass('top-sysf','blinking-green flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-tango','diagram-ok')", dt);
+      dt += 2500;
+
+      setTimeout("setClass('top-busf','flag-red-on')", dt);
+      setTimeout("setClass('top-sysf','flag-red-on')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-fail')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-fail')", dt);
+      setTimeout("setClass('diag-bus-tango','diagram-fail')", dt);
+      dt += 500;
+
+      setTimeout("setClass('top-busf','blinking-green flag-off')", dt);
+      setTimeout("setClass('top-sysf','blinking-green flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-tango','diagram-ok')", dt);
+      dt += 2500;
+
+      setTimeout("setClass('top-busf','flag-off')", dt);
+      setTimeout("setClass('top-sysf','flag-off')", dt);
+      setTimeout("setClass('diag-bus-alpha','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-bravo','diagram-ok')", dt);
+      setTimeout("setClass('diag-bus-tango','diagram-ok')", dt);
+
+      return (dt - delayTime + 500);
+    }
+
+    function init() {
+      displayRtc();
+
+      let timePoint = 0;
+      
+      // Generate ship's log reference (random hex string)
+      const logEntrySize = 8;
+      const logEntryRef = generateHex(logEntrySize);
+      document.getElementById('log-entry-id').innerHTML += logEntryRef;
+      document.getElementById('ships-log-header-b').innerHTML += logEntryRef;
+      document.getElementById('ships-log-header-b').innerHTML += ', log type: EXTENDED';
+      document.getElementById('xlog-entry-id').innerHTML += logEntryRef;
+      document.getElementById('xlog-eol').innerHTML += logEntryRef;
+
+      // Generate program version
+      const masterProgVersion = '3.8.1042';
+      document.getElementById('log-mem-ver').innerHTML += masterProgVersion;
+      document.getElementById('xlog-mem-ver').innerHTML += masterProgVersion;
+
+
+      // Switch on and then off all all status line LEDs
+      // Display test start messages in log
+
+      setClass("xlog-bootup00","console");
+      timePoint += 500;
+      setTimeout('setClass("xlog-bootup01","console")',timePoint);
+      setTimeout('flagsOn()',timePoint);
+      timePoint += 1000;
+      
+      setTimeout('flagsOff()',timePoint);
+      setTimeout('setClass("log-selftest","console")', timePoint);
+      setTimeout('setClass("top-wdt","flag-green-on")', timePoint);
+      setTimeout('setClass("log-entry-id","console")', timePoint + 500);
+      setTimeout('setClass("xlog-selftest","console")',timePoint);
+      setTimeout('setClass("xlog-entry-id","console")', timePoint + 500);
+      setTimeout('setClass("xlog-tmr","console")',timePoint + 500);
+      timePoint += 1000;
+
+      // CPU test
+      setTimeout('setClass("xlog-tmr-done","console-ok")',timePoint);
+      setTimeout('setClass("xlog-cpus","console")',timePoint);
+      setTimeout('setClass("xlog-cpu0","console")',timePoint);
+      timePoint += cpuTest(0,timePoint);
+      setTimeout("setClass('log-cpu0', 'console-ok')", timePoint);
+      setTimeout('setClass("xlog-cpu0-done","console")',timePoint);
+      setTimeout('setClass("xlog-cpu1","console")',timePoint);
+      timePoint += cpuTest(1,timePoint);
+      setTimeout("setClass('log-cpu1', 'console-ok')", timePoint);
+      setTimeout('setClass("xlog-cpu1-done","console")',timePoint);
+      setTimeout('setClass("xlog-cpu2","console")',timePoint);
+      timePoint += cpuTest(2,timePoint);
+      setTimeout("setClass('log-cpu2', 'console-ok')", timePoint);
+      setTimeout('setClass("xlog-cpu2-done","console")',timePoint);
+      timePoint += setTimeout("finishCpuTest()", timePoint);
+      setTimeout('setClass("xlog-cpus-done","console-ok")',timePoint);
+
+      // Memory test
+
+      setTimeout("setClass('xlog-mem-prog','console')",  timePoint);
+      timePoint += testRom(timePoint);
+      setTimeout("setClass('xlog-mem-prog-done','console-ok')",  timePoint);
+      setTimeout("setClass('xlog-mem-ram','console')", timePoint);
+      timePoint += testRam(timePoint);
+      setTimeout("setClass('log-memchk','console')", timePoint);
+      setTimeout("setClass('xlog-mem-ram-done','console-ok')", timePoint);
+
+      // IRQs test
+
+      setTimeout("setClass('xlog-irqs','console')", timePoint);
+      timePoint += testIrqs2578(timePoint);
+      setTimeout("setClass('log-irq0','console-ok')", timePoint);
+
+      timePoint += testIrqs41112(timePoint);
+      setTimeout("setClass('log-irq1','console-ok')", timePoint);
+
+      timePoint += testIrq15(timePoint);
+      setTimeout("setClass('log-irq2','console-ok')", timePoint);
+      setTimeout("setClass('diag-irq-vectors','diagram-ok')", timePoint);
+      setTimeout("setClass('xlog-irqs-done','console-ok')", timePoint);
+
+      // Engine/FADEC tests
+
+      setTimeout("setClass('xlog-fadec','console')", timePoint);
+      cycleColoursActuator(timePoint, "'diag-fadec-a'");
+      setTimeout("setClass('xlog-fadec-a','console')", timePoint);
+      timePoint += cycleColoursActuator(timePoint, "'diag-fadec-b'");
+      setTimeout("setClass('diag-engine-a','console-ok')", timePoint);
+      setTimeout("setClass('diag-engine-b','console-ok')", timePoint);
+      setTimeout("setClass('log-fadec-a','console-ok')", timePoint);
+      setTimeout("setClass('log-fadec-b','console-ok')", timePoint);
+      setTimeout("setClass('xlog-fadec-b','console')", timePoint);
+      setTimeout("setClass('xlog-fadec-done','console-ok')", timePoint);
+
+      // Flight instrument tests
+
+      cycleColoursInstrument(timePoint, "'diag-instr-f'");
+      cycleColoursInstrument(timePoint, "'diag-instr-a0'");
+      setTimeout("setClass('xlog-instr','console')", timePoint);
+      setTimeout("setClass('nlog-instr0','console')", timePoint);
+      setTimeout("document.getElementById('nav-interface-status').innerHTML = 'Initialising navigation instruments...'", timePoint);
+      setTimeout("setClass('nav-interface-status','gentext-warning')", timePoint);
+      timePoint += cycleColoursInstrument(timePoint, "'diag-instr-a1'");
+      setTimeout("setClass('log-instr-f-cal','console-ok')", timePoint);
+      setTimeout("setClass('log-instr-a0-cal','console-ok')", timePoint);
+      setTimeout("setClass('log-instr-a1-cal','console-ok')", timePoint);
+      setTimeout("setClass('xlog-instr-00','console')", timePoint);
+      setTimeout("setClass('xlog-instr-01','console')", timePoint);
+      setTimeout("setClass('xlog-instr-02','console')", timePoint);
+      setTimeout("setClass('xlog-instr-03','console')", timePoint);
+      setTimeout("setClass('xlog-instr-04','console')", timePoint);
+      setTimeout("setClass('xlog-instr-05','console')", timePoint);
+      setTimeout("setClass('xlog-instr-06','console')", timePoint);
+      setTimeout("setClass('xlog-instr-07','console')", timePoint);
+      setTimeout("setClass('xlog-instr-08','console')", timePoint);
+      setTimeout("setClass('xlog-instr-09','console')", timePoint);
+      setTimeout("setClass('xlog-instr-10','console')", timePoint);
+      setTimeout("setClass('xlog-instr-11','console')", timePoint);
+      setTimeout("setClass('xlog-instr-12','console')", timePoint);
+      setTimeout("setClass('xlog-instr-13','console')", timePoint);
+      setTimeout("setClass('xlog-instr-14','console')", timePoint);
+      setTimeout("setClass('xlog-instr-15','console')", timePoint);
+      setTimeout("setClass('xlog-instr-f-cal','console')", timePoint);
+      setTimeout("setClass('xlog-instr-a0-cal','console')", timePoint);
+      setTimeout("setClass('xlog-instr-a1-cal','console')", timePoint);
+      setTimeout("setClass('nlog-instr1','console')", timePoint);
+      setTimeout("setClass('nlog-instr2','console')", timePoint);
+      setTimeout("setClass('nlog-instr3','console')", timePoint);
+
+      cycleColoursInstrument(timePoint, "'diag-instr-f'");
+      cycleColoursInstrument(timePoint, "'diag-instr-a0'");
+      timePoint += cycleColoursInstrument(timePoint, "'diag-instr-a1'");
+      setTimeout("setClass('log-instr-f','console-ok')", timePoint);
+      setTimeout("setClass('log-instr-a0','console-ok')", timePoint);
+      setTimeout("setClass('log-instr-a1','console-ok')", timePoint);
+      setTimeout("setClass('xlog-instr-f','console')", timePoint);
+      setTimeout("setClass('xlog-instr-a0','console')", timePoint);
+      setTimeout("setClass('xlog-instr-a1','console')", timePoint);
+      setTimeout("setClass('xlog-instr-done','console-ok')", timePoint);
+      setTimeout("document.getElementById('nav-interface-status').innerHTML = 'Navigation instruments initialised'", timePoint);
+      setTimeout("setClass('nav-interface-status','console-ok')", timePoint);
+
+      // Radar tests
+
+      setTimeout("setClass('xlog-radar','console')", timePoint);
+      setTimeout("setClass('nlog-radar0','console')", timePoint);
+      setTimeout("setClass('rlog-radar','console')", timePoint);
+      setTimeout("setClass('rlog-radar-tests','console')", timePoint);
+
+      setTimeout("document.getElementById('radar-interface-status').innerHTML = 'Running radar scan tests...'", timePoint);
+      setTimeout("setClass('radar-interface-status','gentext-warning')", timePoint);
+      setTimeout("setClass('rlog-scan','console')", timePoint);
+      timePoint += cycleColoursInstrument(timePoint, "'diag-radar'");
+      setTimeout("setClass('log-radar-scan','console-ok')", timePoint);
+      setTimeout("setClass('xlog-radar-scan','console')", timePoint);
+      setTimeout("setClass('nlog-radar1','console')", timePoint);
+      setTimeout("setClass('nlog-radar2','console')", timePoint);
+      setTimeout("setClass('rlog-scan0','console')", timePoint);
+      setTimeout("setClass('rlog-scan-done','console-ok')", timePoint);
+      
+      setTimeout("document.getElementById('radar-interface-status').innerHTML = 'Running radar DSP tests...'", timePoint);
+      setTimeout("setClass('radar-interface-status','gentext-warning')", timePoint);
+      setTimeout("setClass('rlog-dsp','console')", timePoint);
+      timePoint += cycleColoursInstrument(timePoint, "'diag-radar'");
+      setTimeout("setClass('log-radar-dsp','console-ok')", timePoint);
+      setTimeout("setClass('xlog-radar-dsp','console')", timePoint);
+      setTimeout("setClass('nlog-radar3','console')", timePoint);
+      setTimeout("setClass('nlog-radar4','console')", timePoint);
+      setTimeout("setClass('rlog-dsp0','console')", timePoint);
+      setTimeout("setClass('rlog-dsp1','console')", timePoint);
+      setTimeout("setClass('rlog-dsp-done','console-ok')", timePoint);
+
+      setTimeout("document.getElementById('radar-interface-status').innerHTML = 'Running radar rangefinder tests...'", timePoint);
+      setTimeout("setClass('radar-interface-status','gentext-warning')", timePoint);
+      setTimeout("setClass('rlog-rangefinder','console')", timePoint);
+      timePoint += cycleColoursInstrument(timePoint, "'diag-radar'");
+      setTimeout("setClass('log-radar-rangefinder','console-ok')", timePoint);
+      setTimeout("setClass('log-radar','console-ok')", timePoint);
+      setTimeout("setClass('xlog-radar-rangefinder','console')", timePoint);
+      setTimeout("setClass('xlog-radar-done','console-ok')", timePoint);
+      setTimeout("setClass('nlog-radar5','console')", timePoint);
+      setTimeout("setClass('nlog-done0','console-ok')", timePoint);
+      setTimeout("setClass('nlog-done1','console')", timePoint);
+      setTimeout("setClass('rlog-rangefinder0','console')", timePoint);
+      setTimeout("setClass('rlog-rangefinder-done','console-ok')", timePoint);
+      setTimeout("document.getElementById('radar-interface-status').innerHTML = 'All radar interface functions operational'", timePoint);
+      setTimeout("setClass('radar-interface-status','console-ok')", timePoint);
+      setTimeout("setClass('rlog-done','console-ok')", timePoint);
+      setTimeout("setClass('rlog-done0','console')", timePoint);
+      setTimeout("setClass('rlog-done1','console')", timePoint);
+      setTimeout("setClass('rlog-done2','console')", timePoint);
+      setTimeout("setClass('rlog-done3','console')", timePoint);
+      setTimeout("setClass('rlog-done4','console')", timePoint);
+      setTimeout("setClass('rlog-done5','console')", timePoint);
+
+
+      // Actuator tests
+
+      setTimeout("setClass('xlog-act','console')", timePoint);
+
+      timePoint += cycleColoursActuator(timePoint, "'diag-act'");
+      setTimeout("setClass('log-act-ctrl','console-ok')", timePoint);
+      setTimeout("setClass('xlog-act-ctrl0','console')", timePoint);
+      setTimeout("setClass('xlog-act-ctrl1','console')", timePoint);
+      setTimeout("setClass('xlog-act-ctrl2','console')", timePoint);
+      setTimeout("setClass('xlog-act-ctrl-done','console')", timePoint);
+
+      timePoint += cycleColoursActuator(timePoint, "'diag-act'");
+      setTimeout("setClass('log-act-relay','console-ok')", timePoint);
+      setTimeout("setClass('xlog-act-relay0','console')", timePoint);
+      setTimeout("setClass('xlog-act-relay1','console')", timePoint);
+      setTimeout("setClass('xlog-act-relay2','console')", timePoint);
+      setTimeout("setClass('xlog-act-relay3','console')", timePoint);
+      setTimeout("setClass('xlog-act-relay4','console')", timePoint);
+      setTimeout("setClass('xlog-act-relay-done','console')", timePoint);
+
+      timePoint += cycleColoursInstrument(timePoint, "'diag-act'");
+      setTimeout("setClass('xlog-fb-ctrl0','console')", timePoint);
+      setTimeout("setClass('xlog-fb-ctrl1','console')", timePoint);
+      setTimeout("setClass('xlog-fb-ctrl2','console')", timePoint);
+      timePoint += 500;
+      setTimeout("setClass('log-act-feedback','console-ok')", timePoint);
+      setTimeout("setClass('xlog-fb-relay0','console')", timePoint);
+      setTimeout("setClass('xlog-fb-relay1','console')", timePoint);
+      setTimeout("setClass('xlog-fb-relay2','console')", timePoint);
+      setTimeout("setClass('xlog-fb-relay3','console')", timePoint);
+      setTimeout("setClass('xlog-fb-relay4','console')", timePoint);
+      setTimeout("setClass('xlog-fb-done','console')", timePoint);
+      setTimeout("setClass('log-act','console-ok')", timePoint);
+      setTimeout("setClass('xlog-act-done','console-ok')", timePoint);
+
+      // Air cycle system unit tests
+
+      setTimeout("setClass('xlog-acsu','console')", timePoint);
+      timePoint += cycleColoursInstrument(timePoint, "'diag-acsu'");
+      setTimeout("setClass('log-acsu','console-ok')", timePoint);
+      setTimeout("setClass('xlog-acsu0','console')", timePoint);
+      setTimeout("setClass('xlog-acsu1','console')", timePoint);
+      setTimeout("setClass('xlog-acsu2','console')", timePoint);
+      setTimeout("setClass('xlog-acsu-done','console-ok')", timePoint);
+
+      // Backup battery and aux power unit tests
+
+      setTimeout("setClass('xlog-bapu','console')", timePoint);
+      timePoint += cycleColoursActuator(timePoint, "'diag-batt-aux'");
+      setTimeout("setClass('xlog-bapu0','console')", timePoint);
+      setTimeout("setClass('xlog-bapu1','console')", timePoint);
+      setTimeout("setClass('log-bapu-batt','console-ok')", timePoint);
+      
+      timePoint += cycleColoursActuator(timePoint, "'diag-batt-aux'");
+      setTimeout("setClass('log-bapu-aux','console-ok')", timePoint);
+      setTimeout("setClass('xlog-bapu2','console')", timePoint);
+      setTimeout("setClass('xlog-bapu3','console')", timePoint);
+
+      setTimeout("setClass('log-bapu','console-ok')", timePoint);
+      setTimeout("setClass('xlog-bapu-done0','console-ok')", timePoint);
+      setTimeout("setClass('xlog-bapu-done1','console-ok')", timePoint);
+
+      // Update bus interfaces status in log
+      setTimeout("setClass('xlog-busses','console')", timePoint);
+      timePoint += testBusses(timePoint);
+      setTimeout("setClass('log-busses','console-ok')", timePoint);
+      setTimeout("setClass('xlog-busses-done','console-ok')", timePoint);
+
+      // Summary
+      setTimeout("document.getElementById('buttonSkipProceedInterfaceA').innerHTML = 'START-UP CRAFT'", timePoint);
+      setTimeout("document.getElementById('buttonSkipProceedInterfaceB').innerHTML = 'START-UP CRAFT'", timePoint);
+
+      setTimeout("setClass('xlog-operational','console-ok')", timePoint);
+      setTimeout("setClass('xlog-ready','console-ok')", timePoint);
+      setTimeout("setClass('xlog-eol','console')", timePoint);
+
+      setTimeout("document.getElementById('misc-interface-status').innerHTML = 'Control unit started up'", timePoint);
+      setTimeout("setClass('misc-interface-status','gentext-ok')", timePoint);
+    }
+</script>
+
+</head>
+
+<body onload="init();">
+  <div class="grid-wrapper">
+    <div class="grid-interface-a">
+      <!-- Instrument interface A -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .flag-red-on { font:normal 12px Share Tech Mono; fill: #c80c00; }
+          .flag-red-off { font:normal 12px Share Tech Mono; fill: #800c00; }
+          .flag-yellow-on { font:normal 12px Share Tech Mono; fill: #c8c80c; }
+          .flag-yellow-off { font:normal 12px Share Tech Mono; fill: #80800c; }
+          .flag-green-on { font:normal 12px Share Tech Mono; fill: #0cc800; }
+          .flag-green-off { font:normal 12px Share Tech Mono; fill: #0c8000; }
+          .flag-off { font: normal 12px Share Tech Mono; fill: #808080; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font:normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font:normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font:normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; display:none; }
+          .diagram { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .diagram-ok { font:normal 12px Share Tech Mono; fill: #0cc800; }
+          .diagram-warn { font:normal 12px Share Tech Mono; fill: #c8c80c; }
+          .diagram-fail { font:normal 12px Share Tech Mono; fill: #c80c00; }
+          .blinking-red { animation: blinking-red-anim 0.5s infinite;}
+          @keyframes blinking-red-anim { 100%, 0% { fill: #c80c00; } 50% { fill: #000000; } }
+          .blinking-yellow { animation: blinking-yellow-anim 0.5s infinite;}
+          @keyframes blinking-yellow-anim { 100%, 0% { fill: #c8c80c; } 50% { fill: #000000; } }
+          .blinking-green { animation: blinking-green-anim 0.5s infinite;}
+          @keyframes blinking-green-anim { 100%, 0% { fill: #0cc800; } 50% { fill: #000000; } }
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL instrument interface A</text>
+            <text x="252" y="10" class="gentext-strong" id="top-rtc-a">04/11/2021 19:21:43</text>
+            <text x="396" y="10">
+                <tspan class='flag-off' id="top-tmrf">TMRF</tspan>
+                <tspan class='flag-off' id="top-tmrcor">TMRCOR</tspan>
+                <tspan class='flag-off' id="top-sysf">SYSF</tspan>
+                <tspan class='flag-off' id="top-busf">BUSF</tspan>
+                <tspan class='flag-off' id="top-wdt">WDT</tspan>
+                <tspan class='flag-off' id="top-memf">MEMF</tspan>
+                <tspan class='flag-off' id="top-pgf">PGF</tspan>
+                <tspan class='flag-off' id="top-ok">OK</tspan>
+            </text>
+            <text x="660" y="10" class="gentext">Log entries#condensed</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+            <line x1="388" y1="0" x2="388" y2="13" />
+            <line x1="656" y1="0" x2="656" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <a xlink:href="./bootup00.html">
+              <rect x="0" y="570" width="99" height="29" class="button" />
+              <text x="28" y="586" class="gentext-strong" stroke="none">RESTART</text>
+            </a>
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <a xlink:href="./mainview.html">
+              <rect x="600" y="570" width="99" height="29" class="button" />
+              <text x="604" y="586" class="gentext-strong" stroke="none" id="buttonSkipProceedInterfaceA">SKIP SELF-TEST</text>
+            </a>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+        <g>
+          <!-- log entries -->
+          <g stroke="none">
+            <text x="660" y="22">
+              <tspan x="660" dy=".6em" id="log-selftest" class="console-invis">Boot-up self-test</tspan>
+              <tspan x="660" dy="1.2em" id="log-entry-id" class="console-invis">Log ref </tspan>
+              <tspan x="660" dy="1.2em" id="log-cpu0" class="console-invis">CPU 00 operational</tspan>
+              <tspan x="660" dy="1.2em" id="log-cpu1" class="console-invis">CPU 01 operational</tspan>
+              <tspan x="660" dy="1.2em" id="log-cpu2" class="console-invis">CPU 02 operational</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem0a" class="console-invis">Mem check 0x3ff40000</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem0b" class="console-invis">Checksum e2 84 6b 3d</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem1a" class="console-invis">Mem check 0x80000000</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem1b" class="console-invis">Checksum 5f d7 88 be</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem2a" class="console-invis">Mem check 0xffff8000</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem2b" class="console-invis">Checksum ff d4 6a 95</tspan>
+              <tspan x="660" dy="1.2em" id="log-mem-ver" class="console-invis">Prog.version </tspan>
+              <tspan x="660" dy="1.2em" id="log-ram" class="console-invis">RAM integrity pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-memchk" class="console-invis">Mem check pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-irq0" class="console-invis">IRQ vec 2,5,7,8 pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-irq1" class="console-invis">IRQ vec 4,11,12 pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-irq2" class="console-invis">IRQ vec 15 pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-fadec-a" class="console-invis">Engine A FADEC pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-fadec-b" class="console-invis">Engine B FADEC pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-f-cal" class="console-invis">Flt Instr F calibr OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-a0-cal" class="console-invis">Flt Instr A0 calib OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-a1-cal" class="console-invis">Flt Instr A1 calib OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-a0" class="console-invis">Flight Instr A0 pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-a1" class="console-invis">Flight Instr A1 pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-instr-f" class="console-invis">Flight Instr F pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-radar-scan" class="console-invis">Radar scan OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-radar-dsp" class="console-invis">Radar DSP OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-radar-rangefinder" class="console-invis">Rangefinder OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-radar" class="console-invis">Radar interface pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-act-ctrl" class="console-invis">Control surfaces OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-act-relay" class="console-invis">Relay outputs OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-act-feedback" class="console-invis">Actuator feedback OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-act" class="console-invis">All actuat.rails pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-acsu" class="console-invis">Air cycle system pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-bapu-batt" class="console-invis">Accumulator backup OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-bapu-aux" class="console-invis">Aux power unit OK</tspan>
+              <tspan x="660" dy="1.2em" id="log-bapu" class="console-invis">Batt & Aux pwr pass</tspan>
+              <tspan x="660" dy="1.2em" id="log-busses" class="console-invis">Bus interfaces pass</tspan>
+            </text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <!-- log separator vertical line -->
+            <line x1="656" y1="13" x2="656" y2="570" />
+          </g>
+        </g>
+
+        <g>
+          <!-- diagram -->
+          <g stroke="none">
+            <text x="250" y="122" class='diagram'>
+              <tspan x="250" dx="5.58em" dy=".6em" id="diag-tmr">TMR</tspan>
+              <tspan x="250" dy="2.4em" id="diag-cpu0">CPU 00</tspan>
+              <tspan dx="1.03em" dy="0em" id="diag-cpu1">CPU 01</tspan>
+              <tspan dx="1.03em" dy="0em" id="diag-cpu2">CPU 02</tspan>
+              <tspan x="254" y="187" id="diag-mem0a">0x3ff40000</tspan>
+              <tspan x="254" dy="1.2em" id="diag-mem0b">e2 84 6b 3d</tspan>
+              <tspan x="254" dy="1.2em" id="diag-mem1a">0x80000000</tspan>
+              <tspan x="254" dy="1.2em"id="diag-mem1b">5f d7 88 be</tspan>
+              <tspan x="254" dy="1.2em" id="diag-mem2a">0xffff8000</tspan>
+              <tspan x="254" dy="1.2em" id="diag-mem2b">ff d4 6a 95</tspan>
+              <tspan x="364" y="187" id="diag-ram">RAM</tspan>
+              <tspan x="336" dy="1.2em" id="diag-irq-vectors">IRQ vectors</tspan>
+              <tspan x="336" dy="1.2em">XX </tspan>
+              <tspan>XX </tspan>
+              <tspan id="diag-irq02" id="diag-irq-02">02 </tspan>
+              <tspan>XX </tspan>
+              <tspan x="336" dy="1.2em" id="diag-irq04">04 </tspan>
+              <tspan id="diag-irq05">05 </tspan>
+              <tspan>XX </tspan>
+              <tspan id="diag-irq07">07 </tspan>
+              <tspan x="336" dy="1.2em" id="diag-irq08">08 </tspan>
+              <tspan>XX </tspan>
+              <tspan>XX </tspan>
+              <tspan id="diag-irq11">11 </tspan>
+              <tspan x="336" dy="1.2em" id="diag-irq12">12 </tspan>
+              <tspan>XX </tspan>
+              <tspan>XX </tspan>
+              <tspan id="diag-irq15">15 </tspan>
+              <tspan x="30" y="292" id="diag-bus-alpha">Bus Alpha</tspan>
+              <tspan x="30" y="332" id="diag-bus-bravo">Bus Bravo</tspan>
+              <tspan x="30" y="372" id="diag-bus-tango">Bus Tango</tspan>
+            </text>
+            <text>
+              <tspan  x="106" y="157" id="diag-engine-a" class="diagram">Engine A</tspan>
+              <tspan  x="114" y="187" id="diag-fadec-a" class="diagram">FADEC</tspan>
+              <tspan  x="500" y="157" id="diag-engine-b" class="diagram">Engine B</tspan>
+              <tspan  x="508" y="187" id="diag-fadec-b" class="diagram">FADEC</tspan>
+            </text>
+            <text>
+              <tspan  x="145" y="58" id="diag-instr-f" class="diagram">Flight instruments F</tspan>
+              <tspan  x="395" y="58" id="diag-radar" class="diagram">Radar interface</tspan>
+            </text>
+            <text>
+              <tspan  x="22" y="435" id="diag-instr-a0" class="diagram">Flight instruments A0</tspan>
+              <tspan  x="259" y="435" id="diag-acsu" class="diagram">Air cycle system unit</tspan>
+              <tspan  x="498" y="435" id="diag-instr-a1" class="diagram">Flight instruments A1</tspan>
+              <tspan  x="140" y="495" id="diag-act" class="diagram">CTR&RL actuator unit</tspan>
+              <tspan  x="378" y="495" id="diag-batt-aux" class="diagram">Batt & aux power unit</tspan>
+            </text>
+          </g>
+          <g stroke-width="1" fill="none">
+            
+            <!-- TMR & CPUs -->
+            <rect x="240" y="110" width="174" height="30"/>
+            <rect x="240" y="140" width="58" height="30"/>
+            <rect x="298" y="140" width="58" height="30"/>
+            <rect x="356" y="140" width="58" height="30"/>
+            
+            <!-- ROM -->
+            <rect x="240" y="170" width="88" height="96"/>
+            <path d="M 251 183 h -4 v 15 h 4" />
+            <path d="M 251 212 h -4 v 15 h 4" />
+            <path d="M 251 241 h -4 v 15 h 4" />
+            
+            <!-- RAM & IRQ -->
+            <rect x="328" y="170" width="86" height="20"/>
+            <rect x="328" y="190" width="86" height="76"/>
+            
+            <!-- Bus Alpha / Bus Bravo / Bus Tango -->
+            <line x1="20" y1="300" x2="636" y2="300" />
+            <line x1="20" y1="302" x2="636" y2="302" />
+            <line x1="20" y1="340" x2="636" y2="340" />
+            <line x1="20" y1="342" x2="636" y2="342" />
+            <line x1="20" y1="380" x2="636" y2="380" />
+            <line x1="20" y1="382" x2="636" y2="382" />
+            
+            <!-- Engine & FADEC A and Engine & FADEC B -->
+            <rect x="80" y="140" width="100" height="30"/>
+            <rect x="80" y="170" width="100" height="30"/>
+            <rect x="474" y="140" width="100" height="30"/>
+            <rect x="474" y="170" width="100" height="30"/>
+
+            <line x1="110" y1="200" x2="110" y2="300" />
+            <line x1="130" y1="200" x2="130" y2="297" />
+            <line x1="130" y1="305" x2="130" y2="340" />
+            <line x1="150" y1="200" x2="150" y2="297" />
+            <line x1="150" y1="305" x2="150" y2="337" />
+            <line x1="150" y1="345" x2="150" y2="380" />
+
+            <line x1="504" y1="200" x2="504" y2="300" />
+            <line x1="524" y1="200" x2="524" y2="297" />
+            <line x1="524" y1="305" x2="524" y2="340" />
+            <line x1="544" y1="200" x2="544" y2="297" />
+            <line x1="544" y1="305" x2="544" y2="337" />
+            <line x1="544" y1="345" x2="544" y2="380" />
+
+            <!-- Instruments F, Radar interface -->
+            <rect x="140" y="40" width="140" height="30"/>
+            <rect x="374" y="40" width="140" height="30"/>
+
+            <line x1="200" y1="70" x2="200" y2="300" />
+            <line x1="220" y1="70" x2="220" y2="297" />
+            <line x1="220" y1="305" x2="220" y2="340" />
+
+            <line x1="434" y1="70" x2="434" y2="300" />
+            <line x1="454" y1="70" x2="454" y2="297" />
+            <line x1="454" y1="305" x2="454" y2="340" />
+
+            <!-- APU, instruments aft (A1 & A2), battery, control surfaces' actuators -->
+
+            <rect x="20" y="420" width="140" height="30"/>
+            <rect x="257" y="420" width="140" height="30"/>
+            <rect x="496" y="420" width="140" height="30"/>
+            <rect x="138" y="480" width="140" height="30"/>
+            <rect x="376" y="480" width="140" height="30"/>
+
+            <line x1="110" y1="302" x2="110" y2="337" />
+            <line x1="110" y1="345" x2="110" y2="377" />
+            <line x1="110" y1="385" x2="110" y2="420" />
+            <line x1="130" y1="340" x2="130" y2="377" />
+            <line x1="130" y1="385" x2="130" y2="420" />
+
+            <line x1="317" y1="302" x2="317" y2="337" />
+            <line x1="317" y1="345" x2="317" y2="377" />
+            <line x1="317" y1="385" x2="317" y2="420" />
+            <line x1="337" y1="340" x2="337" y2="377" />
+            <line x1="337" y1="385" x2="337" y2="420" />
+
+            <line x1="564" y1="302" x2="564" y2="337" />
+            <line x1="564" y1="345" x2="564" y2="377" />
+            <line x1="564" y1="385" x2="564" y2="420" />
+            <line x1="584" y1="340" x2="584" y2="377" />
+            <line x1="584" y1="385" x2="584" y2="420" />
+
+            <line x1="188" y1="302" x2="188" y2="337" />
+            <line x1="188" y1="345" x2="188" y2="377" />
+            <line x1="188" y1="385" x2="188" y2="480" />
+            <line x1="208" y1="340" x2="208" y2="377" />
+            <line x1="208" y1="385" x2="208" y2="480" />
+            <line x1="228" y1="382" x2="228" y2="480" />
+
+            <line x1="426" y1="302" x2="426" y2="337" />
+            <line x1="426" y1="345" x2="426" y2="377" />
+            <line x1="426" y1="385" x2="426" y2="480" />
+            <line x1="446" y1="340" x2="446" y2="377" />
+            <line x1="446" y1="385" x2="446" y2="480" />
+            <line x1="466" y1="382" x2="466" y2="480" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface a -->
+
+    <div class="grid-interface-b">
+    <!-- Instrument interface B -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font: normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font: normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font: normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; } 
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL instrument interface B</text>
+            <text x="252" y="10" class="gentext-strong" id="top-rtc-b">04/11/2021 19:21:43</text>
+            <text x="396" y="10" class="gentext" id="ships-log-header-b">Craft log: entry </text>
+            <text x="660" y="10" class="gentext"><!-- reserved --></text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+            <line x1="388" y1="0" x2="388" y2="13" />
+            <line x1="704" y1="0" x2="704" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <a xlink:href="./bootup00.html">
+              <rect x="0" y="570" width="99" height="29" class="button" />
+              <text x="28" y="586" class="gentext-strong" stroke="none">RESTART</text>
+            </a>
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <a xlink:href="./mainview.html">
+              <rect x="600" y="570" width="99" height="29" class="button" />
+              <text x="604" y="586" class="gentext-strong" stroke="none" id="buttonSkipProceedInterfaceB">SKIP SELF-TEST</text>
+            </a>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+        <g>
+          <!-- log entries -->
+          <g stroke="none">
+            <text x="10" y="22">
+              <tspan x="10" dy=".6em" id="xlog-bootup00" class="console-invis">Boot up interface...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-bootup01" class="console-invis">Boot up complete</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-selftest" class="console-invis">Starting system boot-up self-test...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-entry-id" class="console-invis">Craft log entry reference </tspan>
+              <tspan x="10" dy="1.2em" id="xlog-tmr" class="console-invis">Triple modular redundancy test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-tmr-done" class="console-invis">Triple modular redundancy operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpus" class="console-invis">CPU test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu0" class="console-invis">CPU 00 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu0-done" class="console-invis">CPU 00 is operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu1" class="console-invis">CPU 01 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu1-done" class="console-invis">CPU 01 is operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu2" class="console-invis">CPU 02 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpu2-done" class="console-invis">CPU 02 is operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-cpus-done" class="console-invis">All CPUs are operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem-prog" class="console-invis">Program memory area test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem0a" class="console-invis">Memory area 0x3ff40000 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem0b" class="console-invis">Memory area checksum is e2 84 6b 3d</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem1a" class="console-invis">Memory area 0x80000000 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem1b" class="console-invis">Memory area checksum is 5f d7 88 be</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem2a" class="console-invis">Memory area 0xffff8000 test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem2b" class="console-invis">Memory area checksum is ff d4 6a 95</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem-prog-done" class="console-invis">All program memory operational</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem-ver" class="console-invis">Program version </tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem-ram" class="console-invis">RAM integrity test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-mem-ram-done" class="console-invis">RAM integrity test passed</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irqs" class="console-invis">IRQ test start...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq2" class="console-invis">IRQ vector 2 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq7" class="console-invis">IRQ vector 7 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq5" class="console-invis">IRQ vector 5 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq8" class="console-invis">IRQ vector 8 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq11" class="console-invis">IRQ vector 11 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq12" class="console-invis">IRQ vector 12 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq4" class="console-invis">IRQ vector 4 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irq15" class="console-invis">IRQ vector 15 OK</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-irqs-done" class="console-invis">IRQ vector test passed</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-fadec" class="console-invis">Engine FADECs test started...</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-fadec-a" class="console-invis">Engine A FADEC test passed</tspan>
+              <tspan x="10" dy="1.2em" id="xlog-fadec-b" class="console-invis">Engine B FADEC test passed</tspan>
+            </text>
+          </g>
+          <g stroke="none">
+            <text x="277" y="22">
+              <tspan x="277" dy=".6em" id="xlog-fadec-done" class="console-invis">All engine FADECs are operational</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr" class="console-invis">Flight instrument tests start...</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-00" class="console-invis">(F) Primary airspeed indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-01" class="console-invis">(F) Primary altimeter OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-02" class="console-invis">(F) Attitude indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-03" class="console-invis">(F) Turn coordinator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-04" class="console-invis">(F) Flight Instrument F heaters OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-05" class="console-invis">(A0) Radar altimeter OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-06" class="console-invis">(A0) Secondary attitude indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-07" class="console-invis">(A0) Course deviation indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-08" class="console-invis">(A0) VOR indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-09" class="console-invis">(A0) External weather receiver OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-10" class="console-invis">(A1) Secondary altimeter OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-11" class="console-invis">(A1) Magnetic compass OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-12" class="console-invis">(A1) Vertical speed indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-13" class="console-invis">(A1) Heading indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-14" class="console-invis">(A1) Secondary airspeed indicator OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-15" class="console-invis">(A1) Flight Instrument A0 heaters OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-f-cal" class="console-invis">Rail F flt instruments calibration OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-a0-cal" class="console-invis">Rail A0 flt instruments calibration OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-a1-cal" class="console-invis">Rail A1 flt instruments calibration OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-a0" class="console-invis">Rail A0 flight instruments operational</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-a1" class="console-invis">Rail A1 flight instruments operational</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-f" class="console-invis">Rail F flight instruments operational</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-instr-done" class="console-invis">All flight instrument tests passed</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-radar" class="console-invis">Radar interface test start...</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-radar-scan" class="console-invis">Radar scan OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-radar-dsp" class="console-invis">Radar DSP OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-radar-rangefinder" class="console-invis">Rangefinder OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-radar-done" class="console-invis">Radar interface test passed</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act" class="console-invis">Actuator and feedback test start...</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-ctrl0" class="console-invis">Control surface FORE actuators OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-ctrl1" class="console-invis">Control surface AFT0 actuators OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-ctrl2" class="console-invis">Control surface AFT1 actuators OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-ctrl-done" class="console-invis">All control surface actuators OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-relay0" class="console-invis">Relay outputs rail 00 OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-relay1" class="console-invis">Relay outputs rail 01 OK</tspan>
+              <tspan x="277" dy="1.2em" id="xlog-act-relay2" class="console-invis">Relay outputs rail 02 OK</tspan>
+          </g>
+          <g stroke="none">
+            <text x="544" y="22">
+              <tspan x="544" dy=".6em" id="xlog-act-relay3" class="console-invis">Relay outputs rail 03 OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-act-relay4" class="console-invis">Relay outputs rail 04 OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-act-relay-done" class="console-invis">All relay outputs OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-ctrl0" class="console-invis">Control surface FORE feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-ctrl1" class="console-invis">Control surface AFT0 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-ctrl2" class="console-invis">Control surface AFT1 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-relay0" class="console-invis">Relay outputs rail 00 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-relay1" class="console-invis">Relay outputs rail 01 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-relay2" class="console-invis">Relay outputs rail 02 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-relay3" class="console-invis">Relay outputs rail 03 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-relay4" class="console-invis">Relay outputs rail 04 feedback OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-fb-done" class="console-invis">All feedback channels OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-act-done" class="console-invis">All actuators & relays are operational</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-acsu" class="console-invis">Air cycle system test start...</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-acsu0" class="console-invis">Temperature channels OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-acsu1" class="console-invis">Fan & damper control OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-acsu2" class="console-invis">Humidity control unit OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-acsu-done" class="console-invis">Air cycle system is operational</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu" class="console-invis">Battery & Aux Power Unit test start...</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu0" class="console-invis">Accumulator charging OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu1" class="console-invis">Accumulator backup OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu2" class="console-invis">Auxillary Power Unit OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu3" class="console-invis">Battery / Aux Power Unit power management OK</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu-done0" class="console-invis">Battery Power is operational</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-bapu-done1" class="console-invis">Auxillary Power Unit is operational</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-busses" class="console-invis">Bus interfaces test start...</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-busses-done" class="console-invis">All bus interfaces are operational</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-operational" class="console-invis">== All systems are OK & operational ==</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-ready" class="console-invis">== Craft is ready ==</tspan>
+              <tspan x="544" dy="1.2em" id="xlog-eol" class="console-invis">End of the craft log entry </tspan>
+            </text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <!-- log separator vertical lines -->
+            <line x1="267" y1="13" x2="267" y2="570" />
+            <line x1="534" y1="13" x2="534" y2="570" />
+          </g>
+        </g>
+
+      </svg>
+    </div> <!-- grid interface b -->
+
+    <div class="grid-interface-nav">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 800"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .gentext-ok { font: normal 12px Share Tech Mono; fill: #11ff00; }
+          .gentext-warning { font: normal 12px Share Tech Mono; fill: #ffff11; }
+          .gentext-error { font: normal 12px Share Tech Mono; fill: #ff1100; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font: normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font: normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font: normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; } 
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL navigation interface</text>
+            <text x="238" y="10" class="gentext-strong" id="top-rtc-nav">04/11/2021 19:21:43</text>
+            <text x="374" y="10" class="gentext" id="nav-interface-status">Waiting for the navigation subsystem start up...</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="228" y1="0" x2="228" y2="13" />
+            <line x1="368" y1="0" x2="368" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- console entries on screen -->
+          <g stroke="none">
+            <text x="10" y="22">
+              <tspan x="10" dy=".6em" id="nlog-instr0" class="console-invis">Initialising navigation instruments:</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-instr1" class="console-invis">[Flight Instruments on Rail A0] Course deviation indicator initialised</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-instr2" class="console-invis">[Flight Instruments on Rail A0] VOR indicator initialised</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-instr3" class="console-invis">[Flight Instruments on Rail A0] External weather receiver initialised</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar0" class="console-invis">Initialising radar interoperability functions:</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar1" class="console-invis">[Radar] Horizontal situation indicator function enabled</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar2" class="console-invis">[Radar] Vertical profile function enabled</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar3" class="console-invis">[Radar] Identification function enabled</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar4" class="console-invis">[Radar] Waypoint function enabled</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-radar5" class="console-invis">[Radar] Rangefinder function enabled</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-done0" class="console-invis">Navigation subsystem ready</tspan>
+              <tspan x="10" dy="1.2em" id="nlog-done1" class="console-invis">[DETAILS] Modes available: ILS / VOR / NAV / ARC / PLAN</tspan>
+            </text>
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="770" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface nav -->
+
+    <div class="grid-interface-radar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 800"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .gentext-ok { font: normal 12px Share Tech Mono; fill: #11ff00; }
+          .gentext-warning { font: normal 12px Share Tech Mono; fill: #ffff11; }
+          .gentext-error { font: normal 12px Share Tech Mono; fill: #ff1100; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font: normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font: normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font: normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; } 
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL radar human-machine information interface</text>
+            <text x="370" y="10" class="gentext-strong" id="top-rtc-radar">04/11/2021 19:21:43</text>
+            <text x="506" y="10" class="gentext" id="radar-interface-status">Waiting for the radar interface init...</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="364" y1="0" x2="364" y2="13" />
+            <line x1="502" y1="0" x2="502" y2="13" />
+          </g>
+        </g>
+        
+        <g>
+          <!-- console entries on screen -->
+          <g stroke="none">
+            <text x="10" y="22">
+              <tspan x="10" dy=".6em" id="rlog-radar" class="console-invis">Radar interface connected</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-radar-tests" class="console-invis">Tests in progress...</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-scan" class="console-invis">Radar scan test initialising</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-scan0" class="console-invis">[DETAILS] Frequency: AUTO / Sequence: STD / Power: LOW / Range: LOW / Beam: NARROW / Detection: OFF / Signature: OFF</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-scan-done" class="console-invis">Radar scan test passed</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-dsp" class="console-invis">DSP test initialising</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-dsp0" class="console-invis">[IDENTIFICATION] 8a 0a c8 a0 51 80 0c d3</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-dsp1" class="console-invis">[DETAILS] Input channel: 02 / Timing: SYNC / Loop: FAST / Function: STD</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-dsp-done" class="console-invis">DSP test passed</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-rangefinder" class="console-invis">Rangefinder intialised</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-rangefinder0" class="console-invis">[DETAILS] Range: LOW / Mode: ONE-OFF / Directional: ON / Alignment: FIXED / Scan: OFF</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-rangefinder-done" class="console-invis">Rangefinder test passed</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done" class="console-invis">All radar interface functions operational</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done0" class="console-invis">[DETAILS] Function operational: radar scan</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done1" class="console-invis">[DETAILS] Function operational: horizontal situation indicator</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done2" class="console-invis">[DETAILS] Function operational: vertical profile chart</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done3" class="console-invis">[DETAILS] Function operational: identification</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done4" class="console-invis">[DETAILS] Function operational: waypoint & location detection</tspan>
+              <tspan x="10" dy="1.2em" id="rlog-done5" class="console-invis">[DETAILS] Function operational: rangefinder</tspan>
+            </text>
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="770" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface radar -->
+
+    <div class="grid-interface-msg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        onload="msgInit();"
+        viewbox="0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .gentext-ok { font: normal 12px Share Tech Mono; fill: #11ff00; }
+          .gentext-warning { font: normal 12px Share Tech Mono; fill: #ffff11; }
+          .gentext-error { font: normal 12px Share Tech Mono; fill: #ff1100; }
+          .gentext-alert-ack { font: normal 12px Share Tech Mono; fill: #ff0c00; }
+          .gentext-alert {  font: normal 12px Share Tech Mono; fill: #ff0c00; animation: gentext-alert-anim 1s infinite;}
+          @keyframes gentext-alert-anim { 100%, 0% { fill: #ff0c00; } 50% { fill: #0c0000; } }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .indicator-on-g { fill: #1a801a; }
+          .indicator-off-g { fill: #081a08; }
+          .indicator-on-y { fill: #80801a; }
+          .indicator-off-y { fill: #1a1a08; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font: normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font: normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font: normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; } 
+        </style>
+        <script type="text/javascript"><![CDATA[
+          
+          function msgInit() {
+            addCurrentDateTimeToMessages();
+            redrawMessages();
+          }
+
+          function setClassInd(eid, cssclass) {
+            document.getElementById(eid).setAttribute('class', cssclass);
+          }
+
+          function setTextInd(tid, text) {
+            document.getElementById(tid).innerHTML = text;
+          }
+
+          function enableGreen(iid, tid, text) {
+            setClassInd(iid,'indicator-on-g');
+            setClassInd(tid,'gentext-strong');
+            setTextInd(tid, text);
+          }
+
+          function disableGreen(iid, tid, text) {
+            setClassInd(iid,'indicator-off-g');
+            setClassInd(tid,'gentext-shade');
+            setTextInd(tid, text);
+          }
+
+          function enableYellow(iid, tid, text) {
+            setClassInd(iid,'indicator-on-y');
+            setClassInd(tid,'gentext-strong');
+            setTextInd(tid, text);
+          }
+
+          function disableYellow(iid, tid, text) {
+            setClassInd(iid,'indicator-off-y');
+            setClassInd(tid,'gentext-shade');
+            setTextInd(tid, text);
+          }
+
+          function ifEnabled(eid) {
+            let elClass = document.getElementById(eid).getAttribute('class');
+            if (elClass === 'indicator-on-g' || elClass === 'indicator-on-y') {return true;}
+            return false;
+          }
+
+          var alertsNotAcknowledged = true;
+          var commMsgButtons = [true, true, true, false];
+          const commMsgButtonLp = 0;
+          const commMsgButtonMp = 1;
+          const commMsgButtonHp = 2;
+          const commMsgButtonAo = 3;
+
+          function redrawButton(iid, tid, state, text, yellow) {
+            if (!state) {
+              if (yellow) 
+                disableYellow(iid, tid, text + ' DISABLED');
+              else
+                disableGreen(iid, tid, text + ' DISABLED');
+              return;
+            }
+            if (yellow) 
+              enableYellow(iid, tid, text + ' ENABLED');
+            else
+              enableGreen(iid, tid, text + ' ENABLED');
+            return;
+
+          }
+
+          function redrawButtons() {
+            redrawButton('ind-lp', 'msg-lp', commMsgButtons[commMsgButtonLp], 'LP', false);
+            redrawButton('ind-mp', 'msg-mp', commMsgButtons[commMsgButtonMp], 'MP', false);
+            redrawButton('ind-hp', 'msg-hp', commMsgButtons[commMsgButtonHp], 'HP', false);
+            redrawButton('ind-ao', 'msg-ao', commMsgButtons[commMsgButtonAo], 'AO', true);
+          }
+
+          function redrawStatus() {
+            let msgText = 'Alerts only';
+            let msgClass = 'gentext-warning';
+            if (commMsgButtons[commMsgButtonLp] || commMsgButtons[commMsgButtonMp] || commMsgButtons[commMsgButtonHp])
+              {
+                msgText = 'Messages & Alerts';
+                msgClass = 'gentext-ok';
+                if (!commMsgButtons[commMsgButtonLp] || !commMsgButtons[commMsgButtonMp] || !commMsgButtons[commMsgButtonHp])
+                {
+                  msgText = 'Messages[F] & Alerts';
+                  msgClass = 'gentext-warning';
+
+                }
+              }
+            document.getElementById('msg-type').setAttribute('class', msgClass);
+            document.getElementById('msg-type').innerHTML = msgText;                                    
+          }
+
+
+
+          const commMsgPriorityAlert = 0;
+          const commMsgPriorityHigh = 1;
+          const commMsgPriorityMedium = 2;
+          const commMsgPriorityLow = 3;
+
+          var commMessages = [
+            {
+              text: 'Craft startup sequence initiated', 
+              priority: commMsgPriorityLow
+            },
+            {
+              text: 'Ready to receive external communication messages', 
+              priority: commMsgPriorityHigh
+            },
+            {
+              text: 'Receiver channels activated: ALL', 
+              priority: commMsgPriorityMedium
+            },
+            {
+              text: 'Transmitter channels deactivated until startup sequence is completed', 
+              priority: commMsgPriorityAlert
+            },
+            {
+              text: 'Use emergency channels for urgent communication as per relevant protocol', 
+              priority: commMsgPriorityAlert
+            },
+            {
+              text: 'Transmitter channels activated: NONE', 
+              priority: commMsgPriorityMedium
+            },
+
+          ];
+
+          var commMessagesOnScreen = 0;
+
+          function getCurrentDateTimeFormatted() {
+            function twoDigit(x) {
+              if (x > 9 || x < -9) return x;
+              return '0' + x;
+            }
+            const d = new Date()
+            const day = d.getDate();
+            const month = d.getMonth() + 1;
+            const year = d.getFullYear();
+            const hour = d.getHours();
+            const minute = d.getMinutes();
+            const second = d.getSeconds();
+            const dtStrF = 
+              '[' + 
+              twoDigit(day) + '/' + twoDigit(month) + '/' + year + ' ' + 
+              twoDigit(hour) + ':' + twoDigit(minute) + ':' + twoDigit(second) + 
+              ']';
+            return dtStrF;            
+          }
+
+          function addCurrentDateTimeToMessages() {
+            const dtStr = getCurrentDateTimeFormatted();
+            for (let i = 0; i < commMessages.length; i++) {
+              commMessages[i].dateTimeStr = dtStr;
+            }
+          };
+
+          function addMessageTspanToScreen(text, cssClass) {
+              const msgX = "10";
+              const msgDy = !commMessagesOnScreen ? ".6em" : "1.2em";
+              const msgTspan = '<tspan x="' + msgX + '" dy="' + msgDy + '" class="' + cssClass + '">' + text + '</tspan>';
+              document.getElementById('msg-messages').innerHTML += msgTspan;
+              commMessagesOnScreen++;
+          }
+
+          function addMessageToScreen(text, dt, priority) {
+            if (priority == commMsgPriorityLow) {
+              if (commMsgButtons[commMsgButtonLp]) addMessageTspanToScreen(dt + ' ' + text, 'gentext-shade');
+              return;
+            }
+            if (priority == commMsgPriorityMedium) {
+              if (commMsgButtons[commMsgButtonMp]) addMessageTspanToScreen(dt + ' ' + text, 'gentext');
+              return;
+            }
+            if (priority == commMsgPriorityHigh) {
+              if (commMsgButtons[commMsgButtonHp]) addMessageTspanToScreen(dt + ' ' + text, 'gentext-strong');
+              return;
+            }
+            // alerts are always displayed regardless of message filtering
+            let alertCssClass = alertsNotAcknowledged ? 'gentext-alert' : 'gentext-alert-ack';
+            addMessageTspanToScreen(dt + ' ' + text, alertCssClass);
+          }
+
+          function clearMessagesOnScreen() {
+            commMessagesOnScreen = 0;
+            document.getElementById('msg-messages').innerHTML = '';
+          }
+
+          function redrawMessages() {
+            clearMessagesOnScreen();
+            if (!commMessages.length) {
+              addMessageToScreen(
+                ' === NO MESSAGES RECEIVED, CHECK RECEIVER CHANNELS ===', 
+                getCurrentDateTimeFormatted(), 
+                commMsgPriorityAlert);
+              return;
+            }
+            commMessages.forEach(function(msg) { addMessageToScreen(msg.text, msg.dateTimeStr, msg.priority); });
+          }
+
+          function interlockButtons(aoStatus) {
+            if (!commMsgButtons[commMsgButtonLp] && 
+                !commMsgButtons[commMsgButtonMp] && 
+                !commMsgButtons[commMsgButtonHp])
+            {
+              commMsgButtons[commMsgButtonAo] = true;              
+            }
+            
+            if (commMsgButtons[commMsgButtonLp] || 
+                commMsgButtons[commMsgButtonMp] || 
+                commMsgButtons[commMsgButtonHp])
+            {
+              commMsgButtons[commMsgButtonAo] = false;              
+            }
+          }
+
+          function ack(){
+            alertsNotAcknowledged = false;
+            redrawMessages();
+          }
+
+          function toggleLp(){
+            commMsgButtons[commMsgButtonLp] = !commMsgButtons[commMsgButtonLp];
+            interlockButtons();
+            redrawButtons();
+            redrawStatus();
+            redrawMessages();
+          }
+
+          function toggleMp(){
+            commMsgButtons[commMsgButtonMp] = !commMsgButtons[commMsgButtonMp];
+            interlockButtons();
+            redrawButtons();
+            redrawStatus();
+            redrawMessages();
+          }
+
+          function toggleHp(){
+            commMsgButtons[commMsgButtonHp] = !commMsgButtons[commMsgButtonHp];
+            interlockButtons();
+            redrawButtons();
+            redrawStatus();
+            redrawMessages();
+          }
+
+          function toggleAo(){
+            commMsgButtons[commMsgButtonAo] = !commMsgButtons[commMsgButtonAo];
+            if (commMsgButtons[commMsgButtonAo]) {
+              commMsgButtons[commMsgButtonLp] = false;
+              commMsgButtons[commMsgButtonMp] = false;
+              commMsgButtons[commMsgButtonHp] = false;
+            }
+            interlockButtons();
+            redrawButtons();
+            redrawStatus();
+            redrawMessages();
+          }
+
+          function enableAllPriorities(){
+            commMsgButtons[commMsgButtonLp] = true;
+            commMsgButtons[commMsgButtonMp] = true;
+            commMsgButtons[commMsgButtonHp] = true;
+            interlockButtons();
+            redrawButtons();
+            redrawStatus();
+            redrawMessages();
+          }
+
+
+        ]]></script>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL emergency, message & communication interface</text>
+            <text x="392" y="10" class="gentext-strong" id="top-rtc-msg">04/11/2021 19:21:43</text>
+            <text x="532" y="10" class="gentext-strong">NO EMERGENCY ALERTS</text>
+            <text x="670" y="10" class="gentext-ok" id="msg-type">Messages & Alerts</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="385" y1="0" x2="385" y2="13" />
+            <line x1="526" y1="0" x2="526" y2="13" />
+            <line x1="664" y1="0" x2="664" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- message enable indicators -->
+          <g stroke-width="1">
+            <rect x="200" y="538" width="99" height="29" class="indicator-on-g" id="ind-lp" />
+            <text x="218" y="554" class="gentext-strong" stroke="none" id="msg-lp">LP ENABLED</text>
+            <rect x="300" y="538" width="99" height="29" class="indicator-on-g" id="ind-mp" />
+            <text x="318" y="554" class="gentext-strong" stroke="none" id="msg-mp">MP ENABLED</text>
+            <rect x="400" y="538" width="99" height="29" class="indicator-on-g" id="ind-hp" />
+            <text x="418" y="554" class="gentext-strong" stroke="none" id="msg-hp">HP ENABLED</text>
+            <rect x="600" y="538" width="99" height="29" class="indicator-off-y" id="ind-ao" />
+            <text x="618" y="554" class="gentext-shade" stroke="none" id="msg-ao">AO DISABLED</text>
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="570" width="99" height="29" class="button" onclick="ack(this)" />
+            <text x="14" y="586" class="gentext-strong" stroke="none" onclick="ack(this)">ACKNOWLEDGE</text>
+            <rect x="100" y="570" width="99" height="29" class="button" onclick="enableAllPriorities(this)" />
+            <text x="104" y="586" class="gentext-strong" stroke="none" onclick="enableAllPriorities(this)">ENABLE ALL MSG</text>
+            <rect x="200" y="570" width="99" height="29" class="button" onclick="toggleLp(this)" />
+            <text x="212" y="586" class="gentext-strong" stroke="none" onclick="toggleLp(this)">LOW PRIORITY</text>
+            <rect x="300" y="570" width="99" height="29" class="button" onclick="toggleMp(this)" />
+            <text x="312" y="586" class="gentext-strong" stroke="none" onclick="toggleMp(this)">MED PRIORITY</text>
+            <rect x="400" y="570" width="99" height="29" class="button"  onclick="toggleHp(this)" />
+            <text x="407" y="586" class="gentext-strong" stroke="none" onclick="toggleHp(this)">HIGH PRIORITY</text>
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="570" width="99" height="29" class="button" onclick="toggleAo(this)"/>
+            <text x="614" y="586" class="gentext-strong" stroke="none" onclick="toggleAo(this)">ALERTS ONLY</text>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+        <g>
+          <!-- incoming messages on the screen -->
+          <g stroke="none">
+            <text x="10" y="22" id='msg-messages'>
+            </text>
+          </g>
+        </g>
+
+      </svg>
+    </div> <!-- grid interface msg -->
+
+    <div class="grid-interface-misc">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .console { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .console-ok { font: normal 12px Share Tech Mono; fill: #0cc800; }
+          .console-warn { font: normal 12px Share Tech Mono; fill: #c8c80c; }
+          .console-fail { font: normal 12px Share Tech Mono; fill: #c80c00; }
+          .console-invis { font: normal 12px Share Tech Mono; fill: #c8c8c8; } 
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL engine, autopilot & generic information interface</text>
+            <text x="428" y="10" class="gentext-strong" id="top-rtc-misc">04/11/2021 19:21:43</text>
+            <text x="564" y="10" class="gentext" id="misc-interface-status">Waiting for control unit start up...</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="420" y1="0" x2="420" y2="13" />
+            <line x1="560" y1="0" x2="560" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface misc -->
+
+  </div>  <!-- grid wrapper -->
+</body>
+</html>

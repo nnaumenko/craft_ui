@@ -1,0 +1,975 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>UIs</title></title>
+  <meta name="description" content="UIs">
+  <meta name="author" content="Nick">
+
+  <meta property="og:title" content="Craft UI: main view">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nnaumenko.gitlab.com/craft_ui">
+  <meta property="og:description" content="Craft UIs">
+  <meta property="og:image" content="image.png">
+
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed&family=Lato:wght@300&family=Open+Sans+Condensed:wght@300&family=Share+Tech+Mono&family=Zen+Kaku+Gothic+Antique&display=swap" rel="stylesheet"> 
+
+  <style>
+    body {background-color: #4c4c5c;}
+    .grid-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 800px 800px 1fr;
+      gap: 30px;
+      grid-auto-rows: 1;
+    }
+    .grid-margin-lt {
+      grid-column: 1;
+      grid-row: 1 / 3;
+    }
+    .grid-interface-a {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .grid-interface-b {
+      grid-column: 3;
+      grid-row: 1;
+    }
+    .grid-interface-nav {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .grid-interface-radar {
+      grid-column: 3;
+      grid-row: 2;
+    }
+    .grid-interface-msg {
+      grid-column: 2;
+      grid-row: 3;
+    }
+    .grid-interface-misc {
+      grid-column: 3;
+      grid-row: 3;
+    }
+    .grid-margin-rt {
+      grid-column: 4;
+      grid-row: 1 / 3;
+    }
+  </style>
+
+  <script type="text/javascript">
+
+    // Manage ticking RTC clock 
+    function displayRtc() {
+      function twoDigit(x) {
+        if (x > 9 || x < -9) return x;
+        return '0' + x;
+      }
+      const d = new Date()
+      const day = d.getDate();
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const hour = d.getHours();
+      const minute = d.getMinutes();
+      const second = d.getSeconds();
+      const dtstr = 
+        twoDigit(day) + '/' + twoDigit(month) + '/' + year + ' ' + 
+        twoDigit(hour) + ':' + twoDigit(minute) + ':' + twoDigit(second);
+      document.getElementById('nav-text-rtc').innerHTML = dtstr;
+      const refreshRate = 500;
+      mytime=setTimeout('displayRtc()',refreshRate);
+    }
+
+    function init() {
+      displayRtc();
+    }
+
+</script>
+
+</head>
+
+<body onload="init();">
+  <div class="grid-wrapper">
+    <div class="grid-interface-a">
+      <!-- Instrument interface A -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL instrument interface A</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <a xlink:href="./bootup00.html">
+              <rect x="0" y="570" width="99" height="29" class="button" />
+              <text x="28" y="586" class="gentext-strong" stroke="none">RESTART</text>
+            </a>
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <a xlink:href="./mainview.html">
+              <rect x="600" y="570" width="99" height="29" class="button" />
+              <text x="604" y="586" class="gentext-strong" stroke="none" id="buttonSkipProceedInterfaceA">SKIP SELF-TEST</text>
+            </a>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+      </svg>
+    </div> <!-- grid interface a -->
+
+    <div class="grid-interface-b">
+    <!-- Instrument interface B -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL instrument interface B</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="240" y1="0" x2="240" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <a xlink:href="./bootup00.html">
+              <rect x="0" y="570" width="99" height="29" class="button" />
+              <text x="28" y="586" class="gentext-strong" stroke="none">RESTART</text>
+            </a>
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <a xlink:href="./mainview.html">
+              <rect x="600" y="570" width="99" height="29" class="button" />
+              <text x="604" y="586" class="gentext-strong" stroke="none" id="buttonSkipProceedInterfaceB">SKIP SELF-TEST</text>
+            </a>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+      </svg>
+    </div> <!-- grid interface b -->
+
+    <div class="grid-interface-nav">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox="0 0 800 800"
+        onload="navInit()"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+          .nav-heading { font: normal 20px B612 Mono; fill: #c8c8c8; }
+          .nav-distance { font: normal 14px B612 Mono; fill: #0cc8c8; }
+          .nav-altitude { font: normal 18px B612 Mono; fill: #0cc800; }
+          .nav-waypoint-red { font: normal 14px B612 Mono; fill: #c80c0c; }
+          .nav-waypoint-green { font: normal 14px B612 Mono; fill: #0cc80c; }
+          .nav-waypoint-blue { font: normal 14px B612 Mono; fill: #0c0cff; }
+          .nav-waypoint-yellow { font: normal 14px B612 Mono; fill: #c8c80c; }
+          .nav-waypoint-magenta { font: normal 14px B612 Mono; fill: #c80cc8; }
+          .nav-waypoint-cyan { font: normal 14px B612 Mono; fill: #0cc8c8; }
+          .nav-waypoint-white { font: normal 14px B612 Mono; fill: #c8c8c8; }
+          .nav-parameter-designation { font: normal 16px B612 Mono; fill: #a0a0a0; }
+          .nav-parameter-value { font: normal 20px B612 Mono; fill: #0cc80c; }
+          .nav-rtc { font: normal 18px B612 Mono; fill: #c0c0c0; }
+        </style>
+        <script type="text/javascript"><![CDATA[
+
+          var navVertGroundProfile = [];
+
+          var navWaypoints = [];
+
+          const navWaypointTypeCross = 0;
+          const navWaypointTypeDiamond = 1;
+          const navWaypointTypeDiamondCross = 2;
+          const navWaypointTypeCircle = 3;
+          const navWaypointTypeCircleCross = 4;
+          const navWaypointTypeCircleOutCross = 5;
+          const navWaypointTypeTriangleUp = 6;
+          const navWaypointTypeTriangleDn = 7;
+          const navWaypointTypeStar = 8;
+          const navWaypointTypeStarCross = 9;
+
+          function navInit() {
+            const heading = 32;
+            const windDir = 153;
+            const windSpeed = 12;
+            const groundSpeed = 0;
+            const trueAirSpeed = 0;
+            const maxDistance = 40;
+            const vertMaxAltitude = 500;
+            const altitude = 253;
+            const pitch = 30;
+
+            // Horizontal navigation profile
+
+            navDrawMain('nav-tick-lines', 400, 440, 110, 215, 320);
+            navDrawTicks('nav-tick-lines', 400, 440, 324, 15, 5);
+            navDrawTicks('nav-tick-lines', 400, 440, 324, 35, 30);
+            navDrawTickNumbers('nav-tick-numbers', 400, 440, 368, 30, heading);
+            navDrawDistances('nav-distances', 400, 440, maxDistance, 110, 215, 320);
+
+            navDrawArrow('nav-elements-arrow', 45, 85, windDir, 25, '#0cc80c',2);
+            navDrawSpeed('nav-elements-speed', 10, 10, groundSpeed, trueAirSpeed, windDir, windSpeed);
+            navDrawRangeHeading('nav-elements-heading', 620, 10, heading, maxDistance, vertMaxAltitude);
+
+            //navGenWaypoints(12, 350, 350);
+            //navDrawWaypoints('nav-points', 'nav-points-text', 400, 440, 330);
+
+            navDrawCross('nav-points', 'nav-points-text', 420, 250, 10, 'PT-1-CR', 'nav-waypoint-magenta', '#c80cc8');
+            navDrawDiamond('nav-points', 'nav-points-text', 600, 150, 10, 'PT-2A-DIA', 'nav-waypoint-yellow', '#c8c80c', true);
+            navDrawDiamond('nav-points', 'nav-points-text', 430, 200, 18, 'PT-2B-DIA', 'nav-waypoint-cyan', '#0cc8c8', false);
+            navDrawCircle('nav-points', 'nav-points-text', 480, 400, 15, 'PT-3A-CI', 'nav-waypoint-green', '#0cc80c', true);
+            navDrawCircle('nav-points', 'nav-points-text', 500, 350, 10, 'PT-3B-CI', 'nav-waypoint-blue', '#0c0cff', false);
+            navDrawCircleOut('nav-points', 'nav-points-text', 580, 300, 5, 'PT-4-OC', 'nav-waypoint-red', '#c80c0c');
+            navDrawTriangle('nav-points', 'nav-points-text', 450, 150, 15, 'PT-5-UT', 'nav-waypoint-red', '#c80c0c', false);
+            navDrawTriangle('nav-points', 'nav-points-text', 420, 320, 10, 'PT-5-DT', 'nav-waypoint-green', '#0cc80c', true);
+            navDrawStar('nav-points', 'nav-points-text', 630, 415, 5, 'PT-6A-ST', 'nav-waypoint-yellow', '#c8c80c', true);
+            navDrawStar('nav-points', 'nav-points-text', 620, 350, 5, 'PT-6B-ST', 'nav-waypoint-magenta', '#c80cc8', false);
+            
+
+            // Vertical navigation profile
+
+            navGenVertGround(5, 1, 5, 1000, 10);
+            navDrawVertGround('nav-vert-ground', 100, 500, 600, 200, 10);
+            navDrawVertGrid('nav-vert-grid', 'nav-vert-numbers', 100, 500, 600, 200, maxDistance, vertMaxAltitude, altitude, pitch);
+          }
+
+          function navDrawMain(lid, cx, cy, minRadiusPx, midRadiusPx, maxRadiusPx) {
+            const navDoubleLineOffset = 2;
+            const navTopLineOffset = 6;
+            const navSideLineOffset = 5;
+            const navMaxRadiusScaleOffset = 4;
+            const minCircleDash = '3,5';
+            const midCircleDash = '7,5';
+            const maxCircleDash = '10,5';
+            let lineElem = '';
+            lineElem += 
+              ' <line x1="' + (cx - navDoubleLineOffset) + 
+              '" y1="' + (cy - maxRadiusPx + navTopLineOffset) +
+              '" x2="' + (cx - navDoubleLineOffset) + 
+              '" y2="' + (cy) +'" />';
+            lineElem += 
+              ' <line x1="' + (cx + navDoubleLineOffset) + 
+              '" y1="' + (cy - maxRadiusPx + navTopLineOffset) +
+              '" x2="' + (cx + navDoubleLineOffset) + 
+              '" y2="' + (cy) +'" />';
+            lineElem += 
+              ' <line x1="' + (cx - maxRadiusPx - navSideLineOffset) + 
+              '" y1="' + (cy + 2 * navDoubleLineOffset) +
+              '" x2="' + (cx + maxRadiusPx + navSideLineOffset) + 
+              '" y2="' + (cy + 2 * navDoubleLineOffset) +'" />';
+            lineElem += 
+              ' <line x1="' + (cx - maxRadiusPx - navSideLineOffset) + 
+              '" y1="' + (cy + 4 * navDoubleLineOffset) +
+              '" x2="' + (cx + maxRadiusPx + navSideLineOffset) + 
+              '" y2="' + (cy + 4 * navDoubleLineOffset) +'" />';
+            lineElem += 
+              '<path d="M ' + (cx - minRadiusPx) + ' ' + cy + 
+              ' a ' + minRadiusPx + ' ' + minRadiusPx + ' 0 0 1 ' + minRadiusPx + ' -' + minRadiusPx + 
+              ' a ' + minRadiusPx + ' ' + minRadiusPx + ' 0 0 1 ' + minRadiusPx + ' ' + minRadiusPx + 
+              '" stroke-dasharray="' + minCircleDash + '" />';
+            lineElem += 
+              '<path d="M ' + (cx - midRadiusPx) + ' ' + cy + 
+              ' a ' + midRadiusPx + ' ' + midRadiusPx + ' 0 0 1 ' + midRadiusPx + ' -' + midRadiusPx + 
+              ' a ' + midRadiusPx + ' ' + midRadiusPx + ' 0 0 1 ' + midRadiusPx + ' ' + midRadiusPx + 
+              '" stroke-dasharray="' + midCircleDash + '" />';
+            lineElem += 
+              '<path d="M ' + (cx - maxRadiusPx) + ' ' + cy + 
+              ' a ' + maxRadiusPx + ' ' + maxRadiusPx + ' 0 0 1 ' + maxRadiusPx + ' -' + maxRadiusPx + 
+              ' a ' + maxRadiusPx + ' ' + maxRadiusPx + ' 0 0 1 ' + maxRadiusPx + ' ' + maxRadiusPx + 
+              '" stroke-dasharray="' + maxCircleDash + '" />';
+            lineElem += 
+              '<path d="M ' + (cx - maxRadiusPx) + ' ' + cy + 
+              ' a ' + maxRadiusPx + ' ' + maxRadiusPx + ' 0 0 1 ' + maxRadiusPx + ' -' + maxRadiusPx + 
+              ' a ' + maxRadiusPx + ' ' + maxRadiusPx + ' 0 0 1 ' + maxRadiusPx + ' ' + maxRadiusPx + 
+              '" stroke-dasharray="' + maxCircleDash + '" />';
+            const navMaxRadiusScale = maxRadiusPx + navMaxRadiusScaleOffset;
+            lineElem += 
+              '<path d="M ' + (cx - navMaxRadiusScale) + ' ' + cy + 
+              ' a ' + navMaxRadiusScale + ' ' + navMaxRadiusScale + ' 0 0 1 ' + navMaxRadiusScale + ' -' + navMaxRadiusScale + 
+              ' a ' + navMaxRadiusScale + ' ' + navMaxRadiusScale + ' 0 0 1 ' + navMaxRadiusScale + ' ' + navMaxRadiusScale + 
+              '" />';
+            document.getElementById(lid).innerHTML = lineElem;
+          }
+
+          function navDrawTicks(lid, cx, cy, rad, len, offset, heading) {
+            const startAngle = 0;
+            const endAngle = 180;
+            for (let d = startAngle; d <= endAngle; d += offset) {
+              const radians = Math.PI * d / 180;
+              const pt1x = cx + Math.round(rad * Math.cos(radians));
+              const pt1y = cy - Math.round(rad * Math.sin(radians));
+              const pt2x = cx + Math.round((rad + len) * Math.cos(radians));
+              const pt2y = cy - Math.round((rad + len) * Math.sin(radians));
+              const lineElem = '<line x1="' + pt1x + '" y1="' + pt1y + '" x2="' + pt2x + '" y2="' + pt2y + '" />\n';
+              document.getElementById(lid).innerHTML += lineElem;
+            }
+          }
+
+          function navDrawTickNumbers(tid, cx, cy, rad, offset, heading) {
+            const startAngle = 0;
+            const endAngle = 180;
+            let currHeading = heading - 9;
+            for (let d = startAngle; d <= endAngle; d += offset) {
+              const radians = Math.PI * (d - 0.5) / 180;
+              const ptx = cx + Math.round(rad * Math.cos(radians));
+              const pty = cy - Math.round(rad * Math.sin(radians));
+              const textElem = 
+                '<text x="' + ptx + '" y="' + pty + 
+                '" class="nav-heading">'
+                 + currHeading + '</text>';
+              currHeading += Math.round(offset / 10);
+              if (currHeading > 36) currHeading -= 36;
+              document.getElementById(tid).innerHTML += textElem;
+            }
+          }
+
+          function navDrawDistances(tid, cx, cy, maxRadius, minRadiusPx, midRadiusPx, maxRadiusPx) {
+            const xTextOffset = 10;
+            const yTextOffset = 22;
+            const yCoord = cy + yTextOffset;
+            const xCoords = {
+              xMin1: (cx - minRadiusPx - xTextOffset),
+              xMin2: (cx + minRadiusPx - xTextOffset), 
+              xMid1: (cx - midRadiusPx - xTextOffset), 
+              xMid2: (cx + midRadiusPx - xTextOffset), 
+              xMax1: (cx - maxRadiusPx - xTextOffset), 
+              xMax2: (cx + maxRadiusPx - xTextOffset)
+            };
+            const d = maxRadius / maxRadiusPx;
+            const minRadius = Math.round(d * minRadiusPx);
+            const midRadius = Math.round(d * midRadiusPx);
+            document.getElementById(tid).innerHTML = '';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMin1 + '" y="' + yCoord + '" class="nav-distance">' + minRadius + '</text>\n';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMin2 + '" y="' + yCoord + '" class="nav-distance">' + minRadius + '</text>\n';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMid1 + '" y="' + yCoord + '" class="nav-distance">' + midRadius + '</text>\n';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMid2 + '" y="' + yCoord + '" class="nav-distance">' + midRadius + '</text>\n';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMax1 + '" y="' + yCoord + '" class="nav-distance">' + maxRadius + '</text>\n';
+            document.getElementById(tid).innerHTML += 
+              '<text x="' + xCoords.xMax2 + '" y="' + yCoord + '" class="nav-distance">' + maxRadius + '</text>\n';
+            }
+
+          function navDrawOffsetText(tid, x, y, offset, text, cssClass) {
+            if (tid && text) {
+              const offsetTextX = x + offset;
+              const offsetTextY = y + offset;
+              const textElem = 
+                '<text x="' + offsetTextX + '" y="' + offsetTextY + '" class="' + cssClass + '">' + text + '</text>';
+              document.getElementById(tid).innerHTML += textElem;
+            }
+          }
+
+          function navDrawArrow(lid, x, y, direction, size, colour, thickness) {
+            const radians = Math.PI * (direction - 90) / 180;
+            const pt1x = x + Math.round(size * Math.cos(radians));
+            const pt1y = y + Math.round(size * Math.sin(radians));
+            const pt2x = x + Math.round(size * Math.cos(Math.PI+radians));
+            const pt2y = y + Math.round(size * Math.sin(Math.PI+radians));
+            const arrowAngleOffset = 30;
+            const arrowRadianOffset = Math.PI * arrowAngleOffset / 180;
+            const arrowPtsRadius = size * 0.75;
+            const pta1x = x + Math.round(arrowPtsRadius * Math.cos(radians + arrowRadianOffset));
+            const pta1y = y + Math.round(arrowPtsRadius * Math.sin(radians + arrowRadianOffset));
+            const pta2x = x + Math.round(arrowPtsRadius * Math.cos(radians - arrowRadianOffset));
+            const pta2y = y + Math.round(arrowPtsRadius * Math.sin(radians - arrowRadianOffset));
+
+            let lineElem =
+              '<line stroke="' + colour + '" stroke-width="' + thickness + 
+              '" x1="' + pt1x + '" y1="' + pt1y + 
+              '" x2="' + pt2x + '" y2="' + pt2y + 
+              '" />\n';
+            lineElem +=
+              '<line stroke="' + colour + '" stroke-width="' + thickness + 
+              '" x1="' + pta1x + '" y1="' + pta1y + 
+              '" x2="' + pt1x + '" y2="' + pt1y + 
+              '" />\n';
+            lineElem +=
+              '<line stroke="' + colour + '" stroke-width="' + thickness + 
+              '" x1="' + pta2x + '" y1="' + pta2y + 
+              '" x2="' + pt1x + '" y2="' + pt1y + 
+              '" />\n';
+            document.getElementById(lid).innerHTML = lineElem;
+          }
+
+          function navDrawSpeed(tid, x, y, groundSpeed, trueAirSpeed, windDir, windSpeed) {
+            let textElem = '<text x="' + x + '" y="' + y + '">';
+            textElem += '<tspan x="' + x + '" dy=".6em" class="nav-parameter-designation">Gnd Speed</tspan>\n';
+            textElem += '<tspan class="nav-parameter-value">' + groundSpeed + '</tspan>\n';
+            textElem += '<tspan class="nav-parameter-designation">Airspeed</tspan>\n';
+            textElem += '<tspan class="nav-parameter-value">' + trueAirSpeed + '</tspan>\n';
+            textElem += '<tspan x="' + x + '" dy="1.2em" class="nav-parameter-designation">WIND</tspan>\n';
+            textElem += '<tspan class="nav-parameter-value">' + windDir + '&deg; / ' + windSpeed + 'KT</tspan>\n';
+            textElem += '</text>\n';
+            document.getElementById(tid).innerHTML = textElem;
+          }
+
+          function navDrawRangeHeading(tid, x, y, heading, distance, vertDistance) {
+            let textElem = '<text x="' + x + '" y="' + y + '">';
+            textElem += '<tspan x="' + x + '" dy=".6em" class="nav-parameter-designation">Heading</tspan>\n';
+            textElem += '<tspan class="nav-parameter-value">' + heading + '&deg;</tspan>\n';
+            textElem += '<tspan x="' + x + '" dy="1.2em" class="nav-parameter-designation">Nav range</tspan>\n';
+            textElem += '<tspan class="nav-parameter-value">' + distance + 'NM</tspan>\n';
+            textElem += '<tspan x="' + x + '" dy="1.2em" class="nav-parameter-designation">Vert. prof. range</tspan>\n';
+            textElem += '<tspan x="' + x + '" dy="1.2em" class="nav-parameter-value">' + vertDistance + 'FT</tspan>\n';
+            textElem += '</text>\n';
+            document.getElementById(tid).innerHTML = textElem;
+          }
+
+          // Vertical profile
+
+          function navDrawVertGrid(lid, tid, x, y, sizeX, sizeY, maxDistX, maxDistY, altitude, angle) {
+            const minDistLine = Math.round(sizeX / 3);
+            const midDistLine = Math.round(sizeX * 2 / 3);
+            const maxDistLineOffset = 3;
+            const minLineDash = '3,5';
+            const midLineDash = '7,5';
+            const maxLineDash = '10,5';
+
+            const minLineY = Math.round(sizeY / 3);
+            const midLineY = Math.round(sizeY * 2 / 3);
+
+            let lineElem = '';
+            // Frame
+            lineElem += '<rect x="' + x + '" y="' + y + '" width="' + sizeX + '" height="' + sizeY + '" stroke="ffff0c"/>'
+            // Distance lines
+            lineElem +=
+              '<line stroke-dasharray="' + minLineDash + 
+              '" x1="' + (minDistLine + x) + '" y1="' + y + 
+              '" x2="' + (minDistLine + x) + '" y2="' + (y + sizeY) + 
+              '" />\n';
+            lineElem +=
+              '<line stroke-dasharray="' + midLineDash + 
+              '" x1="' + (midDistLine + x) + '" y1="' + y + 
+              '" x2="' + (midDistLine + x) + '" y2="' + (y + sizeY) + 
+              '" />\n';
+            lineElem +=
+              '<line stroke-dasharray="' + maxLineDash + 
+              '" x1="' + (x + sizeX - maxDistLineOffset) + '" y1="' + y + 
+              '" x2="' + (x + sizeX - maxDistLineOffset) + '" y2="' + (y + sizeY) + 
+              '" />\n';
+            // Altitude lines
+            const baseAlt = 0;
+            const minAlt = Math.round(maxDistY / 3);
+            const midAlt = Math.round(maxDistY * 2 / 3);
+            const maxAlt = Math.round(maxDistY);
+            lineElem +=
+              '<line x1="' + x + '" y1="' + (y + sizeY - minLineY) + 
+              '" x2="' + (x + sizeX) + '" y2="' + (y + sizeY - minLineY) + 
+              '" />\n';
+            lineElem +=
+              '<line x1="' + x + '" y1="' + (y + sizeY - midLineY) + 
+              '" x2="' + (x + sizeX) + '" y2="' + (y + sizeY - midLineY) + 
+              '" />\n';
+            // Altitude line and course projection
+            const flProY = Math.round(altitude / maxDistY * sizeY);
+            lineElem +=
+              '<line stroke="#0cc800" stroke-width="4' + 
+              '" x1="' + x + '" y1="' + (y + sizeY - flProY) + 
+              '" x2="' + (x + sizeX) + '" y2="' + (y + sizeY - flProY) + 
+              '" />\n';
+            const angleDistX = sizeX / 6;
+            const angleDiffY = Math.round(Math.sin(Math.PI * angle / 180) * angleDistX);
+            lineElem +=
+              '<line stroke="#0cc800" stroke-width="2" stroke-dasharray="5,1' + 
+              '" x1="' + x + '" y1="' + (y + sizeY - flProY) + 
+              '" x2="' + (x + angleDistX) + '" y2="' + (y + sizeY - flProY - angleDiffY) + 
+              '" />\n';
+            document.getElementById(lid).innerHTML = lineElem;
+
+            let textElem = '';
+            const xTextOffset = 10;
+            const xTextOffsetAlt = 30;
+            const yTextOffset = 15;
+            const yTextOffsetAlt = 5;
+            // distance numbers
+            const yCoord = y + sizeY + yTextOffset;
+            const xCoords = {
+              xMin: (x + minDistLine - xTextOffset),
+              xMid: (x + midDistLine - xTextOffset),
+              xMax: (x + sizeX - xTextOffset),
+            };
+            const minDistX = Math.round(maxDistX / 3);
+            const midDistX = Math.round(maxDistX * 2 / 3);
+            // Distance numbers
+            textElem += 
+              '<text x="' + xCoords.xMin + '" y="' + yCoord + '" class="nav-distance">' + minDistX + '</text>\n';
+            textElem += 
+              '<text x="' + xCoords.xMid + '" y="' + yCoord + '" class="nav-distance">' + midDistX + '</text>\n';
+            textElem += 
+              '<text x="' + xCoords.xMax + '" y="' + yCoord + '" class="nav-distance">' + maxDistX + '</text>\n';
+            // Height numbers
+            textElem += 
+              '<text x="' + (x - xTextOffsetAlt) + '" y="' + (y + sizeY - minLineY + yTextOffsetAlt) + 
+              '" class="nav-distance">' + minAlt + '</text>\n';
+            textElem += 
+              '<text x="' + (x - xTextOffsetAlt) + '" y="' + (y + sizeY - midLineY + yTextOffsetAlt) + 
+              '" class="nav-distance">' + midAlt + '</text>\n';
+            textElem += 
+              '<text x="' + (x - xTextOffsetAlt) + '" y="' + (y + yTextOffsetAlt) + 
+              '" class="nav-distance">' + maxAlt + '</text>\n';
+            textElem += 
+              '<text x="' + (x - xTextOffsetAlt) + '" y="' + (y + sizeY + yTextOffsetAlt) + 
+              '" class="nav-distance">' + baseAlt + '</text>\n';
+            // Current altitude
+            textElem += 
+              '<text x="' + (x + sizeX) + '" y="' + (y + sizeY - flProY + yTextOffsetAlt) + 
+              '" class="nav-altitude">' + altitude + '</text>\n';
+            document.getElementById(tid).innerHTML = textElem;
+          }
+          
+          function navDrawVertGround(lid, x, y, sizeX, sizeY, water) {
+            currX = navVertGroundProfile[0].x;
+            currY = navVertGroundProfile[0].y;
+            let lineElem = '';
+              for (let i = 1; i < navVertGroundProfile.length; i++) {
+              const ptX = navVertGroundProfile[i].x;
+              const ptY = navVertGroundProfile[i].y;
+              lineElem +=
+                '<line x1="' + (x + currX) + '" y1="' + (y + sizeY - currY) + 
+                '" x2="' + (x + ptX) + '" y2="' + (y + sizeY - ptY); 
+                if (currY == water && ptY == water) 
+                  lineElem += '" stroke="#00a0a0" stroke-width="5';
+                else {
+                  const greenHeightLimit = 15;
+                  const colour = (ptY > greenHeightLimit) ? '#995e2a' : '#00ff00';
+                  lineElem += '" stroke="' + colour + '" stroke-width="2';                  
+                }
+                lineElem += '" />\n';
+              currX = ptX;
+              currY = ptY;
+              if (currX >= sizeX) break;
+              }
+            document.getElementById(lid).innerHTML = lineElem;
+          }
+
+          function navGenVertGround(basePoint, smoothness, step, size, water) {
+            let currY = basePoint;
+            navVertGroundProfile = [];
+            for (let currPt = 0; currPt < size; currPt += step) {
+              currY += Math.round(Math.random() * smoothness * 2 - smoothness);
+              if (currY < water) currY = water;
+              let pt = {x: currPt, y: currY};
+              navVertGroundProfile.push(pt);
+            }
+          }
+
+          // Waypoints and other symbols/shapes on screen
+
+          function navGenWaypoints(number, rangeMax) {
+            const waypointTypes = 9;
+            for (let i=0; i<number; i++) {
+              const angleMax = 180;
+              const angle = Math.floor(Math.random() * 2 * angleMax - angleMax);
+              const radius = rangeMax * Math.random (rangeMax);
+              console.log(angle, radius);
+
+              const ptx = Math.floor(angle * Math.sin((angle - 90) * Math.PI / 2));
+              const pty = Math.floor(angle * Math.cos((angle - 90) * Math.PI / 2));
+              const pttype = Math.floor(Math.random() * waypointTypes);
+              const ptname = "NAME_PT";
+              const ptcolour = "#ffff0c";
+              const ptclass = "nav-waypoint-yellow";
+              const ptSize = 10;
+              const wpt = {x:ptx, y:pty, type:pttype, colour:ptcolour, name:ptname, cssclass:ptclass, size: ptSize};
+              navWaypoints.push(wpt);
+            }
+            console.log(navWaypoints);
+          }
+
+          function navDrawWaypoints(lid, tid, cx, cy) {
+            navWaypoints.forEach(function(wpt) {
+              const xx = (cx + wpt.x);
+              const yy = (cy - wpt.y);
+              switch(wpt.type){
+                case navWaypointTypeCross:
+                  navDrawCross(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour);
+                  break;
+                case navWaypointTypeDiamond:
+                  navDrawDiamond(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, false);
+                  break;
+                case navWaypointTypeDiamondCross:
+                  navDrawDiamond(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, true);
+                  break;
+                case navWaypointTypeCircle:
+                  navDrawCircle(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, false);
+                  break;
+                case navWaypointTypeCircleCross:
+                  navDrawCircle(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, true);
+                  break;
+                case navWaypointTypeCircleOutCross:
+                  navDrawCircleOut(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour);
+                  break;
+                case navWaypointTypeTriangleUp:
+                  navDrawTriangle(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, false);
+                  break;
+                case navWaypointTypeTriangleDn:
+                  navDrawTriangle(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, true);
+                  break;
+                case navWaypointTypeStar:
+                  navDrawStar(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, false);
+                  break;
+                case navWaypointTypeStarCross:
+                  navDrawStar(lid, tid, xx, yy, wpt.size, wpt.name, wpt.cssclass, wpt.colour, true);
+                  break;
+                default:
+                  console.log('Unknown waypoint type ' + wpt.type);
+                  console.log(wpt);
+              }
+            });
+          }
+
+          function navDrawCross(lid, tid, x, y, size, text, cssClass, colour, cross) {
+            // Example:
+            // cross:
+            // <path stroke="cyan" d=" M 200 50 m 0 -10 v 20 m -10 -10 h 20" />
+            let lineElem =
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              ' m 0 -' + size + ' v ' + 2 * size + ' m -' + size + ' -' + size + ' h ' + 2 * size + '" />';
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x + size / 4, y, size, text, cssClass);
+          }
+
+          function navDrawDiamond(lid, tid, x, y, size, text, cssClass, colour, cross) {
+            // Examples:
+            // diamond:
+            // <path stroke="cyan" d=" M 200 100 m 0 -10 l 10 10 l -10 10 l -10 -10 l 10 -10" />
+            // crossed diamond:
+            // <path stroke="cyan" d=" M 200 150 m 0 -10 l 10 10 l -10 10 l -10 -10 l 10 -10 v 20 m -10 -10 h 20" />
+
+            let lineElem = 
+              '<path stroke="' + colour + '" d=" M ' + x + ' ' + y +
+              'm 0 -' + size + ' l ' + size + ' ' + size + ' l -' + size + ' ' + size + 
+              ' l -' + size + ' -' + size + ' l ' + size + ' -' + size;
+            if (cross) lineElem += 'v ' + 2 * size + ' m -' + size + ' -' + size + ' h' + 2 * size; 
+            lineElem += '" />';
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x, y, size, text, cssClass);
+          }
+
+          function navDrawCircle(lid, tid, x, y, size, text, cssClass, colour, cross) {
+            // Examples:
+            // circle:
+            // <path stroke="cyan" d=" M 200 200 m 0 -10 a 10 10 0 0 1 0 20 a 10 10 0 0 1 0 -20 " />
+            // circle, crossed:
+            // <path stroke="cyan" d=" M 200 250 m 0 -10 a 10 10 0 0 1 0 20 a 10 10 0 0 1 0 -20 v 20 m -10 -10 h 20" />
+            let lineElem = 
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              ' m 0 -' + size + ' a ' + size + ' ' + size + ' 0 0 1 0 ' + 2 * size + 
+              ' a ' + size + ' ' + size + ' 0 0 1 0 -' + 2 * size;
+            if (cross) lineElem += 'v ' + 2 * size + ' m -' + size + ' -' + size + ' h ' + 2 * size; 
+            lineElem += '" />';
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x + size/4, y, size, text, cssClass);
+          }
+
+          function navDrawCircleOut(lid, tid, x, y, size, text, cssClass, colour) {
+            // Example:
+            // circle with outer cross:
+            // <path stroke="cyan" d=" M 200 300 m 0 -5 a 5 5 0 0 1 0 10 a 5 5 0 0 1 0 -10 v -5 m 0 15 v 5 m -5 -10 h -5 m 15 0 h 5 0" />
+            let lineElem = 
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              ' m 0 -' + size + 
+              ' a ' + size + ' ' + size + ' 0 0 1 0 ' + 2 * size + 
+              ' a ' + size + ' ' + size + ' 0 0 1 0 -' + 2 * size + 
+              ' v -' + size + ' m 0 ' + 3 * size + ' v ' + size + ' m -' + size + ' -' + 2* size + 
+              ' h -' + size + ' m ' + 3 * size + ' 0 h ' + size + ' 0" />';
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x + size, y + size, size, text, cssClass);
+          }
+
+          function navDrawTriangle(lid, tid, x, y, size, text, cssClass, colour, downwards) {
+            // Examples:
+            // triangle, upwards:
+            // <path stroke="cyan" d=" M 200 400 m -10 10 l 20 0 l -10 -20 l -10 20 m 0 -10 h 20" />
+            // triangle, downwards:
+            // <path stroke="cyan" d=" M 200 350 m -10 -10 l 20 0 l -10 20 l -10 -20 m 0 10 h 20" />
+            let lineElem = 
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              ' m -' + size + ' ' + size + ' l ' + 2 * size + ' 0 l -' + size + ' -' + 2 * size + 
+              ' l -' + size + ' ' + 2 * size + ' m 0 -' + size + ' h ' + 2 * size + '" />';
+            if (downwards) {
+            lineElem = 
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              'm -' + size + ' -' + size + ' l ' + 2 * size + ' 0 l -' + size + ' ' + 2 * size + 
+              ' l -' + size + ' -' + 2 * size + ' m 0 ' + size + ' h ' + 2 * size + '" />';
+            }
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x, y, size, text, cssClass);
+          }
+
+          function navDrawStar(lid, tid, x, y, size, text, cssClass, colour, cross) {
+            // Examples:
+            // star:
+            // <path stroke="cyan" d=" M 200 450 m 5 -5 l -5 -10 l -5 10 l -10 5 l 10 5 l 5 10 l 5 -10 l 10 -5 l -10 -5" />
+            // star, crossed:
+            // <path stroke="cyan" d=" M 200 500 m 5 -5 l -5 -10 l -5 10 l -10 5 l 10 5 l 5 10 l 5 -10 l 10 -5 l -10 -5 m 10 5 h -30 m 15 -15 v 30" />
+            let lineElem = 
+              '<path stroke="' + colour + '" d="M ' + x + ' ' + y + 
+              'm ' + size + ' -' + size + ' l -' + size + ' -' + 2 * size + 
+              ' l -' + size + ' ' + 2 * size + ' l -' + 2 * size + ' ' + size + 
+              ' l ' + 2 * size + ' ' + size + ' l ' + size + ' ' + 2 * size + 
+              ' l ' + size + ' -' + 2 * size + ' l ' + 2 * size + ' -' + size + ' l -' + 2 * size + ' -' + size;
+            if (cross) 
+              lineElem +=  
+                'm ' + 2 * size + ' ' + size + ' h -' + 6 * size + 
+                ' m ' + 3 * size + ' -' + 3 * size + ' v ' + 6 * size; 
+            lineElem += '" />';
+            document.getElementById(lid).innerHTML += lineElem;
+            navDrawOffsetText(tid, x + size, y - 2 * size, size, text, cssClass);
+          }
+
+
+        ]]></script>
+
+        <g> <!-- navigation panel -->
+          <!-- navigation hemicircles & lines -->
+          <g stroke-width="1" fill="none" id='nav-main'></g>
+
+          <!-- navigation distance numbers -->
+          <g stroke="none" id="nav-distances"></g>
+
+          <!-- navigation hemicircle heading ticks: see navDrawTicks() -->
+          <g stroke-width="1" fill="none" id="nav-tick-lines"></g>
+
+          <!-- navigation hemicircle heading numbers: see navDrawNumbers() -->
+          <g stroke="none" id="nav-tick-numbers"></g>
+
+          <!-- additional navigation elements wind arrow: see navDrawArrow() -->
+          <g stroke-width="1" fill="none" id="nav-elements-arrow"></g>
+
+          <!-- additional navigation elements speed texts: see navDrawSpeed() -->
+          <g stroke="none" id="nav-elements-speed"></g>
+
+          <!-- additional navigation elements heading & range texts: see navDrawRangeHeading() -->
+          <g stroke="none" id="nav-elements-heading"></g>
+
+          <!-- clock -->
+          <g stroke="none" id="nav-rtc" class="nav-rtc" id="nav-text-rtc">
+            <text x="290" y="25" id="nav-text-rtc"></text>
+          </g>
+
+          <!-- vertical profile, ground -->
+          <g stroke-width="1" fill="none" id='nav-vert-ground'></g>
+
+          <!-- vertical profile, lines & grid -->
+          <g stroke-width="1" fill="none" id='nav-vert-grid'></g>
+
+          <!-- vertical profile, texts -->
+          <g stroke="none" id="nav-vert-numbers"></g>
+
+        </g>
+
+        <g stroke-width="1" fill="none">
+            <!-- shapes on navigaion: 
+              see navDrawCross(), navDrawDiamond(), navDrawCircle(), navDrawCircleOut(), navDrawTriangle(), navDrawStar() -->
+          <g id="nav-points"></g>
+          <g stroke="none" id="nav-points-text"></g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="770" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface nav -->
+
+    <div class="grid-interface-radar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 800"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL radar human-machine information interface</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="364" y1="0" x2="364" y2="13" />
+          </g>
+        </g>
+        
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="770" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="770" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface radar -->
+
+    <div class="grid-interface-msg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        onload="msgInit();"
+        viewbox="0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+        </style>
+        <script type="text/javascript"><![CDATA[
+          
+          function msgInit() {
+          }
+
+          function dummy() {
+          }
+
+        ]]></script>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL emergency, message & communication interface</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="385" y1="0" x2="385" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="570" width="99" height="29" class="button" onclick="dummy(this)" />
+            <text x="14" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">ACKNOWLEDGE</text>
+            <rect x="100" y="570" width="99" height="29" class="button" onclick="dummy(this)" />
+            <text x="104" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">ENABLE ALL MSG</text>
+            <rect x="200" y="570" width="99" height="29" class="button" onclick="dummy(this)" />
+            <text x="212" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">LOW PRIORITY</text>
+            <rect x="300" y="570" width="99" height="29" class="button" onclick="dummy(this)" />
+            <text x="312" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">MED PRIORITY</text>
+            <rect x="400" y="570" width="99" height="29" class="button"  onclick="dummy(this)" />
+            <text x="407" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">HIGH PRIORITY</text>
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="570" width="99" height="29" class="button" onclick="dummy(this)"/>
+            <text x="614" y="586" class="gentext-strong" stroke="none" onclick="dummy(this)">ALERTS ONLY</text>
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+
+      </svg>
+    </div> <!-- grid interface msg -->
+
+    <div class="grid-interface-misc">
+      <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" stroke="#ffffff"
+        text-anchor="left" font-size="24" style="background: #000000"
+        viewbox = "0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> <!-- TODO: scale? -->
+        <style>
+          .gentext { font: normal 12px Share Tech Mono; fill: #c8c8c8; }
+          .gentext-strong { font: normal 12px Share Tech Mono; fill: #ffffff; }
+          .gentext-shade { font: normal 12px Share Tech Mono; fill: #808080; }
+          .button-inactive { fill: none;  }
+          .button { fill: #1a1a1a; }
+        </style>
+        <g>
+          <!-- top bar -->
+          <g stroke="none">
+            <text x="1" y="10" class="gentext">CRAFT CONTROL engine, autopilot & generic information interface</text>
+            <text x="428" y="10" class="gentext-strong" id="top-rtc-misc">NEXT</text>
+          </g>
+          <g stroke-width="1" fill="none">
+            <line x1="0" y1="13" x2="800" y2="13" />
+            <line x1="420" y1="0" x2="420" y2="13" />
+          </g>
+        </g>
+
+        <g>
+          <!-- bottom bar with buttons -->
+          <g stroke-width="1">
+            <rect x="0" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="100" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="200" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="300" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="400" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="500" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="600" y="570" width="99" height="29" class="button-inactive" />
+            <rect x="700" y="570" width="99" height="29" class="button-inactive" />
+          </g>
+        </g>
+      </svg>
+    </div> <!-- grid interface misc -->
+
+  </div>  <!-- grid wrapper -->
+</body>
+</html>

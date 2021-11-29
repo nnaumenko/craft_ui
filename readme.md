@@ -5,8 +5,8 @@
 A child's toy, a very simple generated image/animation of a User Interface for a fictional flying craft.
 
 [![pipeline status](https://gitlab.com/nnaumenko/craft_ui/badges/master/pipeline.svg)](https://gitlab.com/nnaumenko/craft_ui/-/commits/master)
-[![MIT license]](https://img.shields.io/github/license/nnaumenko/craft_ui)](LICENSE.md)
-[![Live demo]](https://nnaumenko.gitlab.io/craft_ui/index.html)
+[![MIT license](https://img.shields.io/github/license/nnaumenko/craft_ui)](LICENSE.md)
+[![Live demo](https://img.shields.io/badge/live-demo-blue)](https://nnaumenko.gitlab.io/craft_ui/index.html)
 
 ## Prerequisites
 
